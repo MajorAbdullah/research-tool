@@ -1,0 +1,40 @@
+# deps
+node_modules/
+.pnpm-store/
+
+# next
+.next/
+out/
+next-env.d.ts
+
+# build
+dist/
+extension/dist/
+*.tsbuildinfo
+
+# env — NEVER commit real values
+.env
+.env.local
+.env.*.local
+
+# sqlite database + wal/shm sidecars
+data/
+*.db
+*.db-wal
+*.db-shm
+
+# embedding model cache
+.fastembed_cache/
+models/
+
+# test + coverage
+coverage/
+playwright-report/
+test-results/
+
+# os / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/*
+!.vscode/extensions.json

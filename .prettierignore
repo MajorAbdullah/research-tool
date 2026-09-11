@@ -1,0 +1,6 @@
+.next
+dist
+extension/dist
+pnpm-lock.yaml
+drizzle/*.sql
+data
