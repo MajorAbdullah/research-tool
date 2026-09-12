@@ -1,0 +1,77 @@
+{
+  "data": [
+    {
+      "id": "nvidia/nemotron-3-super-120b-a12b:free",
+      "canonical_slug": "nvidia/nemotron-3-super-120b-a12b-2026-08-01",
+      "context_length": 262144,
+      "supported_parameters": [
+        "max_tokens",
+        "temperature",
+        "top_p",
+        "tools",
+        "tool_choice",
+        "response_format",
+        "structured_outputs",
+        "reasoning"
+      ]
+    },
+    {
+      "id": "dots-studio/dots-3-note-preview:free",
+      "context_length": 512000,
+      "supported_parameters": [
+        "max_tokens",
+        "temperature",
+        "tools",
+        "tool_choice",
+        "response_format",
+        "structured_outputs"
+      ]
+    },
+    {
+      "id": "nex-agi/nex-n2.5-pro:free",
+      "context_length": 262144,
+      "supported_parameters": [
+        "max_tokens",
+        "temperature",
+        "response_format",
+        "structured_outputs"
+      ]
+    },
+    {
+      "id": "openrouter/free",
+      "context_length": 200000,
+      "supported_parameters": ["max_tokens", "temperature", "response_format", "structured_outputs"]
+    },
+    {
+      "id": "google/gemma-4-31b-it:free",
+      "context_length": 262144,
+      "supported_parameters": ["max_tokens", "temperature", "tools", "tool_choice"]
+    },
+    {
+      "id": "nex-agi/nex-n2.5-mini:free",
+      "context_length": 262144,
+      "supported_parameters": ["max_tokens", "response_format", "structured_outputs"]
+    },
+    {
+      "id": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "canonical_slug": "nvidia/nemotron-3-ultra-550b-a55b-2026-08-01",
+      "context_length": 1000000,
+      "supported_parameters": ["max_tokens", "temperature", "top_p", "tools", "tool_choice", "reasoning"]
+    },
+    {
+      "id": "thinkingmachines/inkling:free",
+      "context_length": 1048576,
+      "supported_parameters": ["max_tokens", "temperature"]
+    },
+    {
+      "id": "nvidia/nemotron-3.5-lightning:free",
+      "context_length": 1000000,
+      "supported_parameters": ["max_tokens", "temperature", "tools", "tool_choice"]
+    },
+    {
+      "id": "thinkingmachines/inkling-small:free",
+      "context_length": 1048576,
+      "supported_parameters": ["max_tokens", "temperature"]
+    }
+  ]
+}
