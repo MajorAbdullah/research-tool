@@ -1,0 +1,337 @@
+@import 'tailwindcss';
+
+/* =============================================================================
+   Sieve design tokens
+   =============================================================================
+   Every color in this file lives here, expressed in OKLCH, and nowhere else —
+   no component in src/components/** should ever contain a hardcoded hex/rgb
+   value. If a component needs a new color, it earns a token here first.
+
+   Architecture: raw semantic variables are declared on :root (light values)
+   and re-declared, value-only, under a `prefers-color-scheme: dark` media
+   query and under `[data-theme]` attribute selectors. `@theme inline` then
+   *maps* Tailwind's `--color-*` namespace onto those raw variables rather
+   than baking in literal values, so every `bg-background`/`text-foreground`/
+   etc. utility automatically repaints when the variables change — no `dark:`
+   variant classes needed anywhere in component code. See the "Theming
+   strategy" note further down for why `dark:` utilities are deliberately not
+   used in this codebase.
+
+   Palette is deliberately small: one neutral (ink) scale plus four semantic
+   accents (primary, destructive, warning, success) — see CLAUDE.md /
+   ui-ux-best-practices.md §4 on avoiding a sprawling, undisciplined palette.
+   Every pairing below was checked against WCAG AA (4.5:1 text, 3:1 UI
+   components) with a throwaway contrast script before being committed here.
+   ============================================================================= */
+
+:root {
+  /* Base radius the whole radius scale derives from (shadcn convention) —
+     10px reads as "considered" without tipping into the soft, bubbly
+     over-rounded look ui-ux-best-practices.md calls out as a templated tell,
+     and without going to the opposite zero-radius "broadsheet" extreme. */
+  --radius: 0.625rem;
+
+  /* ---- Neutral scale (ink) — light ---- */
+  --background: oklch(0.99 0.002 247);
+  --foreground: oklch(0.21 0.02 265);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.21 0.02 265);
+
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.21 0.02 265);
+
+  --muted: oklch(0.955 0.004 260);
+  --muted-foreground: oklch(0.42 0.014 260);
+
+  --secondary: oklch(0.94 0.006 260);
+  --secondary-foreground: oklch(0.25 0.02 260);
+
+  --accent: oklch(0.94 0.01 258);
+  --accent-foreground: oklch(0.25 0.02 260);
+
+  /* Borders/inputs are darker than a typical "hairline" on purpose: WCAG
+     1.4.11 (non-text contrast) asks for 3:1 against the adjacent surface for
+     any border that's load-bearing for identifying a component, and a
+     whisper-thin gray-200-style line fails that outright. Verified 3:1+
+     against both --background and --card. */
+  --border: oklch(0.64 0.01 260);
+  --input: oklch(0.6 0.012 260);
+  --ring: oklch(0.47 0.19 258);
+
+  /* ---- Semantic accents — light ---- */
+  --primary: oklch(0.47 0.19 258);
+  --primary-foreground: oklch(0.98 0.005 258);
+
+  --destructive: oklch(0.52 0.21 25);
+  --destructive-foreground: oklch(0.98 0.005 25);
+
+  /* Extraction-tier degradation and the "testing" research status both read
+     through this token — see extraction-tier-warning.tsx and status-pill.tsx.
+     This is a product-critical color: CLAUDE.md is explicit that silent
+     degradation is the failure this product exists to prevent, so "partial /
+     metadata_only" must never quietly blend into the neutral chrome. */
+  --warning: oklch(0.5 0.15 65);
+  --warning-foreground: oklch(0.99 0.02 90);
+
+  --success: oklch(0.5 0.14 155);
+  --success-foreground: oklch(0.98 0.02 150);
+}
+
+/* Follow the OS by default … */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --background: oklch(0.17 0.012 260);
+    --foreground: oklch(0.94 0.006 260);
+
+    --card: oklch(0.21 0.012 260);
+    --card-foreground: oklch(0.94 0.006 260);
+
+    --popover: oklch(0.21 0.012 260);
+    --popover-foreground: oklch(0.94 0.006 260);
+
+    --muted: oklch(0.26 0.012 260);
+    --muted-foreground: oklch(0.68 0.014 260);
+
+    --secondary: oklch(0.29 0.014 260);
+    --secondary-foreground: oklch(0.9 0.01 260);
+
+    --accent: oklch(0.3 0.02 258);
+    --accent-foreground: oklch(0.92 0.01 260);
+
+    --border: oklch(0.52 0.016 260);
+    --input: oklch(0.56 0.018 260);
+    --ring: oklch(0.72 0.15 258);
+
+    --primary: oklch(0.72 0.15 258);
+    --primary-foreground: oklch(0.15 0.03 258);
+
+    --destructive: oklch(0.7 0.19 25);
+    --destructive-foreground: oklch(0.15 0.02 25);
+
+    --warning: oklch(0.75 0.15 70);
+    --warning-foreground: oklch(0.18 0.03 70);
+
+    --success: oklch(0.72 0.14 155);
+    --success-foreground: oklch(0.16 0.02 150);
+
+    color-scheme: dark;
+  }
+}
+
+/* … but an explicit choice always wins, in either direction. `[data-theme]`
+   is set by ThemeToggle (src/components/common/theme-toggle.tsx) on <html>,
+   persisted to localStorage, and applied pre-hydration by an inline script
+   in layout.tsx so there's no flash of the wrong theme. */
+:root[data-theme='dark'] {
+  --background: oklch(0.17 0.012 260);
+  --foreground: oklch(0.94 0.006 260);
+
+  --card: oklch(0.21 0.012 260);
+  --card-foreground: oklch(0.94 0.006 260);
+
+  --popover: oklch(0.21 0.012 260);
+  --popover-foreground: oklch(0.94 0.006 260);
+
+  --muted: oklch(0.26 0.012 260);
+  --muted-foreground: oklch(0.68 0.014 260);
+
+  --secondary: oklch(0.29 0.014 260);
+  --secondary-foreground: oklch(0.9 0.01 260);
+
+  --accent: oklch(0.3 0.02 258);
+  --accent-foreground: oklch(0.92 0.01 260);
+
+  --border: oklch(0.52 0.016 260);
+  --input: oklch(0.56 0.018 260);
+  --ring: oklch(0.72 0.15 258);
+
+  --primary: oklch(0.72 0.15 258);
+  --primary-foreground: oklch(0.15 0.03 258);
+
+  --destructive: oklch(0.7 0.19 25);
+  --destructive-foreground: oklch(0.15 0.02 25);
+
+  --warning: oklch(0.75 0.15 70);
+  --warning-foreground: oklch(0.18 0.03 70);
+
+  --success: oklch(0.72 0.14 155);
+  --success-foreground: oklch(0.16 0.02 150);
+
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+/* =============================================================================
+   Theming strategy (read before adding a `dark:` class anywhere)
+   =============================================================================
+   This file swaps the *values* of semantic CSS variables; components only
+   ever reference the variables (via bg-background, text-foreground, etc.)
+   and never need a `dark:` variant class. Do not introduce
+   `@custom-variant dark (...)` and start sprinkling `dark:*` utilities — that
+   variant can only ever match one of (attribute-only) or (media-query-only),
+   and either choice would silently stop tracking the *other* half of the
+   "prefers-color-scheme AND [data-theme] override, winning in both
+   directions" requirement above. If a component needs different treatment
+   per theme beyond color, it's a sign the token model needs a new semantic
+   variable, not a one-off dark: override.
+   ============================================================================= */
+
+@theme inline {
+  /* ---- Color -> token mapping (see docs.tailwindcss.com/theme, "inline") --- */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+
+  /* ---- Type ---- */
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+
+  /* A deliberately dense scale: this is a triage tool for someone reviewing
+     dozens of items a day, not a marketing page — scannability beats
+     generous whitespace at the text-size level. text-base sits a notch
+     under the conventional 16px; form controls in ui/input.tsx and
+     ui/textarea.tsx opt back up to 1rem explicitly so typing never feels
+     cramped. */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 0.9375rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg: 1.0625rem;
+  --text-lg--line-height: 1.625rem;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 2rem;
+  --text-3xl: 1.875rem;
+  --text-3xl--line-height: 2.25rem;
+
+  /* ---- Radius scale, derived from --radius ---- */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* Named spacing token backing the hard 44x44pt touch-target requirement —
+     ui/button.tsx, ui/checkbox.tsx and bottom-nav.tsx all size against this
+     instead of repeating the literal `11` (2.75rem) scale step, so the
+     requirement is named and grep-able. */
+  --spacing-touch: 2.75rem;
+}
+
+/* =============================================================================
+   Base layer
+   ============================================================================= */
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    color-scheme: light dark;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    /* Remove Android/Chrome's default gray tap flash — every interactive
+       element here provides its own visible pressed/focus state instead. */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  ::selection {
+    background-color: var(--color-primary);
+    color: var(--color-primary-foreground);
+  }
+}
+
+/* =============================================================================
+   Signature motion — the one deliberate moment (see comment below), plus a
+   universal reduced-motion carve-out that applies to it and to every
+   ordinary transition in the primitives.
+   ============================================================================= */
+
+/**
+ * SIGNATURE MOTION MOMENT: the "sieving" shimmer.
+ *
+ * ui-ux-best-practices.md is explicit: spend the motion budget once, on
+ * something tied to *this* product, not several stacked effects. This is
+ * that one spend — everything else (button presses, dialog/sheet open,
+ * dropdown/tooltip fades, toast enter/exit) uses a plain, fast
+ * transition-colors/opacity/transform with no named animation, on purpose,
+ * so this doesn't read as one effect among several.
+ *
+ * Why this one: Sieve's entire premise is that saving a link is instant but
+ * the AI enrichment behind it isn't — the product must keep the user
+ * informed that something is being worked on (ui-ux-best-practices.md §1)
+ * without pretending it's done. A light band sweeping across a
+ * still-loading card reads as material passing through a mesh — literally
+ * the product's name — rather than a generic shimmer borrowed from any
+ * other app. It appears in exactly one place: Skeleton (ui/skeleton.tsx),
+ * reused by LoadingGrid and by ItemCard while an item is still
+ * queued/processing. Nowhere else in the system animates on a loop.
+ */
+@keyframes shimmer {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -50% 0;
+  }
+}
+
+@layer utilities {
+  .shimmer {
+    background-image: linear-gradient(
+      100deg,
+      transparent 30%,
+      color-mix(in oklch, var(--color-foreground) 10%, transparent) 50%,
+      transparent 70%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.8s ease-in-out infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer {
+    animation: none;
+    background-image: none;
+  }
+
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
