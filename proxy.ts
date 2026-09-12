@@ -21,7 +21,18 @@ import { NextResponse } from 'next/server'
 import { auth, verifyExtensionToken } from '@/lib/auth'
 
 function isPublicPath(pathname: string): boolean {
-  return pathname === '/login' || pathname === '/api/v1/health' || pathname.startsWith('/api/auth/')
+  return (
+    pathname === '/login' ||
+    pathname === '/api/v1/health' ||
+    pathname.startsWith('/api/auth/') ||
+    // P8 addition — see src/app/share/route.ts's file header. Android's Web Share Target POST is
+    // a browser-native top-level navigation the OS constructs directly: it cannot carry a custom
+    // Authorization header, and docs/API.md §1.2 explicitly notes an installed standalone PWA
+    // isn't guaranteed to attach a session cookie to it either. There is no credential this gate
+    // could check on that inbound request, so /share is carved out the same way
+    // /api/v1/health is, and authenticates callers internally instead (resolveSeededUserId()).
+    pathname === '/share'
+  )
 }
 
 function acceptsBearerToken(pathname: string): boolean {
