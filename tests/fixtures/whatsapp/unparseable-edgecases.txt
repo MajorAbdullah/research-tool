@@ -1,0 +1,6 @@
+Some corrupted export preamble text with no timestamp before any real message
+[01/09/2026, 10:00:00 AM] Sana Khan: first valid message https://example.com/first
+[99/99/2026, 10:05:00 AM] Sana Khan: this looks like a timestamp but the date is impossible
+[02/09/2026, 11:00:00 AM] Imran Aziz: second valid message https://example.com/second
+[03/09/2026, 12:00:00 PM] Sana Khan: third valid message, still going strong https://example.com/third
+and one more thought before I forget - check this too https://example.com/fourth

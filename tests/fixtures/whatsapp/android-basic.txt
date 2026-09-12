@@ -1,0 +1,10 @@
+05/09/2026, 07:45 - Sana Khan: morning standup notes are here https://docs.google.com/document/d/abc123
+05/09/2026, 07:46 - Sana Khan: and the recording https://vimeo.com/123456789
+06/09/2026, 22:10 - Imran Aziz: reposting from twitter https://twitter.com/someuser/status/1234567890123456789
+06/09/2026, 22:11 - Imran Aziz: no links here, just a reply
+07/09/26, 00:00 - Sana Khan: two-digit year edge case https://example.com/y2k-ish
+07/09/26, 23:59 - Imran Aziz: end of day link https://example.org/eod
+08/09/2026, 09:30 - Messages and calls are end-to-end encrypted. No one outside of this chat, not even WhatsApp, can read or listen to them.
+08/09/2026, 09:31 - Sana Khan joined using this group's invite link
+08/09/2026, 09:32 - Sana Khan left
+21/09/2026, 14:00 - Imran Aziz: day over twelve so format is unambiguous here https://example.net/unambiguous

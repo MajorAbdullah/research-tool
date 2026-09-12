@@ -1,0 +1,9 @@
+[01/09/2026, 9:15:00 AM] Sana Khan: Good morning! Starting the day with this thread on agent evals https://arxiv.org/abs/2609.01234
+[01/09/2026, 9:16:42 AM] Sana Khan: also check the repo https://github.com/openai/whisper and the discussion on https://news.ycombinator.com/item?id=12345678
+[01/09/2026, 12:00:00 AM] Imran Aziz: sending this at midnight https://example.com/midnight-link
+[01/09/2026, 12:00:00 PM] Imran Aziz: and this one at noon https://example.com/noon-link
+[02/09/2026, 11:05:30 PM] Imran Aziz: <Media omitted>
+[03/09/2026, 6:40:00 PM] Sana Khan: no link in this one, just chatting
+[04/09/2026, 8:00:00 AM] Messages and calls are end-to-end encrypted. No one outside of this chat, not even WhatsApp, can read or listen to them. Tap to learn more.
+[04/09/2026, 8:01:00 AM] Imran Aziz joined using this group's invite link
+[13/09/2026, 3:22:15 PM] Sana Khan: unambiguous day component here so date order is provably DD/MM https://example.com/unambiguous-day
