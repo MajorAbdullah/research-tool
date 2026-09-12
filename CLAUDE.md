@@ -38,6 +38,25 @@ It replaces the "send links to my own WhatsApp chat" habit, which piles up and r
 | Deploy | Docker Compose → one container on Contabo, GHCR image, host nginx vhost |
 | Testing | Vitest (unit) + Playwright (e2e smoke) |
 
+### Pinned-version constraints (do NOT bump these without reading why)
+
+Several versions are held **below** their npm `latest` tag on purpose. `latest` is per-package
+and says nothing about whether the graph works; peer ranges can also be aspirational.
+
+| Package | Pinned | Why not latest |
+|---|---|---|
+| `typescript` | **6.0.3** | TS **7.x** is the Go-native rewrite and `typescript-eslint` rejects it outright (*"typescript-eslint does not support TS 7.0"*), which breaks `pnpm lint` repo-wide. 6.0.3 is the newest version inside typescript-eslint's `>=4.8.4 <6.1.0` peer range. Revisit when [typescript-eslint#10940](https://github.com/typescript-eslint/typescript-eslint/issues/10940) ships TS 7 support. |
+| `eslint` | **9.39.5** | ESLint **10.x** removed `scopeManager.addGlobals`, which `typescript-eslint@8.70` (current latest) still calls — lint dies with `TypeError: scopeManager.addGlobals is not a function`. `eslint-config-next` *claims* `eslint: ">=9.0.0"`, but that peer range is wrong in practice. |
+| `@types/node` | **24.x** | Matches the Node 24 runtime. `latest` is 22.x and the `ts6.0` tag points at 26.x, which describes Node 26 APIs this runtime does not have. |
+| `next-auth` | **5.0.0-beta.32** | Auth.js v5 is only published on the `beta` tag; `latest` is still the v4 line. |
+
+Also removed from `next.config.ts` because Next 16 dropped them — re-adding either is a type error:
+`experimental.instrumentationHook` (gone in Next 15; `instrumentation.ts` is stable) and the
+top-level `eslint` key (Next 16 removed built-in lint integration; use `pnpm lint`).
+
+And: the `middleware` file convention is **deprecated in Next 16** — this repo uses `proxy.ts`
+with a named `proxy` export. The `edge` runtime is not supported there; `proxy` is always nodejs.
+
 **Scale reality:** one user, one container, **`mem_limit: 1g`** (measured ~550-650 MB steady), sharing
 a 6-vCPU box with ~45 other containers and 7.1 GB free. Every design choice is bounded by being a
 good neighbour on that box.

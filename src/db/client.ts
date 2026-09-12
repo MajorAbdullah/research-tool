@@ -26,7 +26,7 @@ import * as schema from './schema'
 declare global {
   // `var` (not let/const) is required here — TS only merges global augmentations declared this
   // way. This is a type-only ambient declaration; it has no runtime effect of its own.
-  // eslint-disable-next-line no-var
+   
   var __sieveSqlite: Database.Database | undefined
 }
 

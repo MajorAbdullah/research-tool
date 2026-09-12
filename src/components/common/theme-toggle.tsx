@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useSyncExternalStore } from 'react'
 import { Monitor, Moon, Sun } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -12,6 +12,36 @@ const NEXT_MODE: Record<ThemeMode, ThemeMode> = { system: 'light', light: 'dark'
 const MODE_ICON = { system: Monitor, light: Sun, dark: Moon } as const
 const MODE_LABEL: Record<ThemeMode, string> = { system: 'System', light: 'Light', dark: 'Dark' }
 
+/**
+ * localStorage is an external store, so it is read through useSyncExternalStore
+ * rather than copied into state inside an effect. Two reasons beyond satisfying
+ * react-hooks/set-state-in-effect: there is no render-then-correct cascade, and
+ * the `storage` event subscription makes the theme sync across tabs for free.
+ *
+ * `storage` does NOT fire in the tab that wrote the value, so writes also notify
+ * local listeners explicitly.
+ */
+const listeners = new Set<() => void>()
+
+function subscribe(onChange: () => void): () => void {
+  listeners.add(onChange)
+  window.addEventListener('storage', onChange)
+  return () => {
+    listeners.delete(onChange)
+    window.removeEventListener('storage', onChange)
+  }
+}
+
+function getSnapshot(): ThemeMode {
+  const stored = window.localStorage.getItem(STORAGE_KEY)
+  return stored === 'light' || stored === 'dark' ? stored : 'system'
+}
+
+/** The server cannot know the preference; layout.tsx's pre-paint script applies it. */
+function getServerSnapshot(): ThemeMode {
+  return 'system'
+}
+
 function applyTheme(mode: ThemeMode) {
   const root = document.documentElement
   if (mode === 'system') {
@@ -21,6 +51,7 @@ function applyTheme(mode: ThemeMode) {
     root.dataset.theme = mode
     window.localStorage.setItem(STORAGE_KEY, mode)
   }
+  for (const l of listeners) l()
 }
 
 /**
@@ -30,19 +61,15 @@ function applyTheme(mode: ThemeMode) {
  * OS" stays a real, returnable option rather than something only achievable
  * by clearing site data.
  *
- * Starts rendering as "system" on every request (server and first client
- * paint agree, so there's no hydration mismatch) and syncs to the real
- * stored preference in an effect — layout.tsx's inline pre-hydration script
- * already applied the correct `data-theme` before paint, so this is purely
- * about the icon/label catching up, not a flash of the wrong theme.
+ * Renders as "system" on the server (which cannot read localStorage) and
+ * resolves to the stored preference on the client. layout.tsx's inline
+ * pre-hydration script has already applied the correct `data-theme` before
+ * paint, so this component only governs the icon/label — there is never a
+ * flash of the wrong theme.
  */
 export function ThemeToggle() {
-  const [mode, setMode] = useState<ThemeMode>('system')
-
-  useEffect(() => {
-    const stored = window.localStorage.getItem(STORAGE_KEY)
-    if (stored === 'light' || stored === 'dark') setMode(stored)
-  }, [])
+  const mode = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
+  const cycle = useCallback(() => applyTheme(NEXT_MODE[mode]), [mode])
 
   const Icon = MODE_ICON[mode]
 
@@ -50,11 +77,7 @@ export function ThemeToggle() {
     <Button
       variant="ghost"
       size="icon"
-      onClick={() => {
-        const next = NEXT_MODE[mode]
-        setMode(next)
-        applyTheme(next)
-      }}
+      onClick={cycle}
       aria-label={`Theme: ${MODE_LABEL[mode]}. Click to switch to ${MODE_LABEL[NEXT_MODE[mode]]}.`}
     >
       <Icon className="size-4" aria-hidden="true" />

@@ -23,7 +23,7 @@ export interface LadderLogger {
 
 export const consoleLadderLogger: LadderLogger = {
   warn(message, meta) {
-    // eslint-disable-next-line no-console -- P2 has no logging-infra dependency; a caller that
+     
     // wants structured logs injects its own LadderLogger (e.g. P7's pino instance) instead.
     console.warn(`[extractors] ${message}`, meta ?? {})
   },

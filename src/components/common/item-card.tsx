@@ -61,6 +61,10 @@ export function ItemCard({ item, href, className }: ItemCardProps) {
     >
       <div className="relative aspect-video w-full overflow-hidden rounded-md bg-muted">
         {item.thumbnail_url ? (
+          // Thumbnails come from arbitrary remote hosts (github, youtube, instagram, any
+          // blog). next/image needs an allowlisted remotePattern per domain, which cannot
+          // be enumerated for user-supplied URLs, so a plain <img> is correct here.
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={item.thumbnail_url}
             alt=""

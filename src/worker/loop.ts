@@ -119,7 +119,7 @@ export function createWorkerLoop(deps: WorkerLoopDeps): WorkerLoopHandle {
 
 declare global {
   // `var` is required for global augmentation merging; this is a type-only ambient declaration.
-  // eslint-disable-next-line no-var
+   
   var __sieveWorkerLoop: WorkerLoopHandle | undefined
 }
 

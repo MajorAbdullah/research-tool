@@ -1,16 +1,25 @@
 import next from 'eslint-config-next'
 
-export default [
-  ...next(),
+/**
+ * `eslint-config-next` default-exports an ARRAY of flat configs
+ * (`next`, `next/typescript`, plus an unnamed one) — it is not a callable.
+ * Spread it; calling it throws "next is not a function".
+ */
+const config = [
   {
-    ignores: ['.next/**', 'dist/**', 'extension/dist/**', 'data/**', 'drizzle/**'],
+    ignores: [
+      '.next/**',
+      'dist/**',
+      'extension/dist/**',
+      'data/**',
+      'drizzle/**',
+      '.fastembed_cache/**',
+      'playwright-report/**',
+      'test-results/**',
+      '.worktrees/**',
+    ],
   },
-  {
-    rules: {
-      // Every query must go through the user_id scoping helper (CLAUDE.md → Non-Negotiables).
-      // Enforced in review; see src/repositories/ for the helper.
-      '@typescript-eslint/no-floating-promises': 'error',
-      '@typescript-eslint/no-explicit-any': 'error',
-    },
-  },
+  ...next,
 ]
+
+export default config

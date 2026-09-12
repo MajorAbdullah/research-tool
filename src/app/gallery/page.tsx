@@ -196,7 +196,7 @@ export default function GalleryPage() {
           <TabsContent value="inbox">
             Unreviewed items land here as soon as the pipeline finishes.
           </TabsContent>
-          <TabsContent value="testing">Items you're actively trying out.</TabsContent>
+          <TabsContent value="testing">Items you&rsquo;re actively trying out.</TabsContent>
           <TabsContent value="archived">Kept for reference, off the active board.</TabsContent>
         </Tabs>
       </Section>
@@ -231,7 +231,7 @@ export default function GalleryPage() {
             <DialogHeader>
               <DialogTitle>Re-extract this item?</DialogTitle>
               <DialogDescription>
-                This re-runs the extraction ladder from the top. It won't touch your note or status.
+                This re-runs the extraction ladder from the top. It won&rsquo;t touch your note or status.
               </DialogDescription>
             </DialogHeader>
             <p className="text-sm text-muted-foreground">
