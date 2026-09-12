@@ -20,7 +20,7 @@
 
 declare global {
   // `var` is required for global augmentation merging; this is a type-only ambient declaration.
-   
+
   var __sieveInstrumentationStarted: boolean | undefined
 }
 

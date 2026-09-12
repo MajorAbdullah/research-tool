@@ -23,7 +23,6 @@ export interface LadderLogger {
 
 export const consoleLadderLogger: LadderLogger = {
   warn(message, meta) {
-     
     // wants structured logs injects its own LadderLogger (e.g. P7's pino instance) instead.
     console.warn(`[extractors] ${message}`, meta ?? {})
   },

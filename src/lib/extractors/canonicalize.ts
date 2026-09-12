@@ -118,7 +118,10 @@ export interface CanonicalizeOptions {
 }
 
 /** Full canonicalization, including following a known shortener's redirect when possible. */
-export async function canonicalizeUrl(rawUrl: string, options: CanonicalizeOptions = {}): Promise<string> {
+export async function canonicalizeUrl(
+  rawUrl: string,
+  options: CanonicalizeOptions = {},
+): Promise<string> {
   const syncForm = canonicalizeUrlSync(rawUrl)
   if (!options.resolveShortener) return syncForm
 

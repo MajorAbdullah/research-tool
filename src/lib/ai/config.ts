@@ -59,7 +59,9 @@ function parsePositiveInt(raw: string | undefined, varName: string, fallback: nu
 export function loadAiConfig(env: Record<string, string | undefined> = process.env): AiConfig {
   const openRouterApiKey = env.OPENROUTER_API_KEY?.trim()
   if (!openRouterApiKey) {
-    throw new Error('OPENROUTER_API_KEY is required (see .env.example: get one at https://openrouter.ai/keys)')
+    throw new Error(
+      'OPENROUTER_API_KEY is required (see .env.example: get one at https://openrouter.ai/keys)',
+    )
   }
   const chainEnrich = parseChain(env.LLM_CHAIN_ENRICH, 'LLM_CHAIN_ENRICH')
   const chainChat = parseChain(env.LLM_CHAIN_CHAT, 'LLM_CHAIN_CHAT')

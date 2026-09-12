@@ -111,7 +111,10 @@ export class YoutubeExtractor implements Extractor {
   }
 }
 
-async function fetchOEmbed(http: HttpClient, videoId: string): Promise<YoutubeOEmbedResponse | null> {
+async function fetchOEmbed(
+  http: HttpClient,
+  videoId: string,
+): Promise<YoutubeOEmbedResponse | null> {
   const watchUrl = encodeURIComponent(`https://www.youtube.com/watch?v=${videoId}`)
   const res = await http.request(`${OEMBED_ENDPOINT}?url=${watchUrl}&format=json`, {
     timeoutMs: OEMBED_TIMEOUT_MS,

@@ -118,7 +118,11 @@ function buildStructuredRequest(
   }
 }
 
-function extractRawPayload(strategy: SchemaStrategy, model: string, response: OpenRouterChatResponse): string {
+function extractRawPayload(
+  strategy: SchemaStrategy,
+  model: string,
+  response: OpenRouterChatResponse,
+): string {
   const choice = response.choices[0]
   if (!choice) {
     throw new Error(`OpenRouter response for '${model}' had no choices`)

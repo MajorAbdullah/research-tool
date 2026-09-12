@@ -34,7 +34,10 @@ export interface FakeHttpRoute {
 }
 
 /** Convenience for the common case: one route, one fixed outcome, always ok:true, status 200. */
-export function respondWith(body: Buffer | string, extra: Partial<Extract<FakeHttpOutcome, { kind: 'response' }>> = {}): FakeHttpOutcome {
+export function respondWith(
+  body: Buffer | string,
+  extra: Partial<Extract<FakeHttpOutcome, { kind: 'response' }>> = {},
+): FakeHttpOutcome {
   return { kind: 'response', body, ...extra }
 }
 
@@ -51,7 +54,10 @@ export interface FakeHttpCall {
  * (loudly, in the test itself, not swallowed) if a request doesn't match any route — an
  * unexpected outbound call is a bug in the test's fixture setup, not something to silently no-op.
  */
-export function createFakeHttpClient(routes: FakeHttpRoute[], calls: FakeHttpCall[] = []): HttpClient {
+export function createFakeHttpClient(
+  routes: FakeHttpRoute[],
+  calls: FakeHttpCall[] = [],
+): HttpClient {
   const cursor = new Map<FakeHttpRoute, number>()
 
   return {
@@ -59,7 +65,9 @@ export function createFakeHttpClient(routes: FakeHttpRoute[], calls: FakeHttpCal
       calls.push({ url })
 
       const route = routes.find((candidate) =>
-        typeof candidate.match === 'string' ? url.includes(candidate.match) : candidate.match.test(url),
+        typeof candidate.match === 'string'
+          ? url.includes(candidate.match)
+          : candidate.match.test(url),
       )
       if (!route) {
         throw new Error(`createFakeHttpClient: no route matched request URL: ${url}`)
@@ -69,7 +77,9 @@ export function createFakeHttpClient(routes: FakeHttpRoute[], calls: FakeHttpCal
       cursor.set(route, index + 1)
       const outcome = route.outcomes[Math.min(index, route.outcomes.length - 1)]
       if (!outcome) {
-        throw new Error(`createFakeHttpClient: route for ${String(route.match)} has no outcomes configured`)
+        throw new Error(
+          `createFakeHttpClient: route for ${String(route.match)} has no outcomes configured`,
+        )
       }
 
       if (outcome.kind === 'error') {
@@ -77,7 +87,8 @@ export function createFakeHttpClient(routes: FakeHttpRoute[], calls: FakeHttpCal
       }
 
       const status = outcome.status ?? 200
-      const body = typeof outcome.body === 'string' ? Buffer.from(outcome.body, 'utf-8') : outcome.body
+      const body =
+        typeof outcome.body === 'string' ? Buffer.from(outcome.body, 'utf-8') : outcome.body
       return {
         status,
         ok: status >= 200 && status < 300,

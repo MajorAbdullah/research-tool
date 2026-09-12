@@ -3,7 +3,9 @@ import { routeForContentLength } from '@/lib/ai/long-content-router'
 import { CapabilityProbe, type ModelCapability } from '@/lib/ai/capability-probe'
 import type { LLMMessage } from '@/types/contracts'
 
-function capabilityMap(entries: Array<Partial<ModelCapability> & { id: string; contextLength: number }>) {
+function capabilityMap(
+  entries: Array<Partial<ModelCapability> & { id: string; contextLength: number }>,
+) {
   const map = new Map<string, ModelCapability>()
   for (const e of entries) {
     map.set(e.id, {

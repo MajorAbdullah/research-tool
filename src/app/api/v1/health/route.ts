@@ -86,7 +86,12 @@ function checkQueue(): QueueHealth {
     const pending = row?.pending ?? 0
     const oldestPendingAgeMs = row?.oldest_run_at ? Math.max(0, Date.now() - row.oldest_run_at) : 0
 
-    return { status: 'ok', pending, oldest_pending_age_ms: oldestPendingAgeMs, worker_enabled: workerEnabled }
+    return {
+      status: 'ok',
+      pending,
+      oldest_pending_age_ms: oldestPendingAgeMs,
+      worker_enabled: workerEnabled,
+    }
   } catch (err) {
     logger.error({ err }, 'health: queue check failed')
     return { status: 'error', pending: 0, oldest_pending_age_ms: 0, worker_enabled: workerEnabled }
@@ -119,13 +124,24 @@ function checkLlmQuota(): LlmQuotaHealth {
   const usedToday = 0
 
   const now = new Date()
-  const resetsAt = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0, 0)
+  const resetsAt = Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate() + 1,
+    0,
+    0,
+    0,
+    0,
+  )
 
   return {
     used_today: usedToday,
     cap: config.llmDailyCap,
     interactive_reserve: config.llmInteractiveReserve,
-    remaining_background: Math.max(0, config.llmDailyCap - config.llmInteractiveReserve - usedToday),
+    remaining_background: Math.max(
+      0,
+      config.llmDailyCap - config.llmInteractiveReserve - usedToday,
+    ),
     remaining_interactive: Math.max(0, config.llmDailyCap - usedToday),
     resets_at: resetsAt,
   }

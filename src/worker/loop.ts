@@ -80,7 +80,12 @@ export function createWorkerLoop(deps: WorkerLoopDeps): WorkerLoopHandle {
           continue
         }
 
-        const jobLog = log.child({ jobId: job.id, jobName: job.name, itemId: itemIdOf(job.payload), lane: laneId })
+        const jobLog = log.child({
+          jobId: job.id,
+          jobName: job.name,
+          itemId: itemIdOf(job.payload),
+          lane: laneId,
+        })
         const startedAt = Date.now()
         jobLog.info('job.start')
 
@@ -119,7 +124,7 @@ export function createWorkerLoop(deps: WorkerLoopDeps): WorkerLoopHandle {
 
 declare global {
   // `var` is required for global augmentation merging; this is a type-only ambient declaration.
-   
+
   var __sieveWorkerLoop: WorkerLoopHandle | undefined
 }
 

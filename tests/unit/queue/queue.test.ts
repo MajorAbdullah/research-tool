@@ -22,7 +22,11 @@ describe('JobQueue', () => {
   })
 
   it('enqueue stores a job as queued with zero attempts, and claimNext round-trips the payload', () => {
-    const payload: JobPayload = { name: JobName.Resolve, url: 'https://example.com', surface: 'web' }
+    const payload: JobPayload = {
+      name: JobName.Resolve,
+      url: 'https://example.com',
+      surface: 'web',
+    }
     const enqueued = queue.enqueue(payload)
     expect(enqueued.state).toBe('queued')
     expect(enqueued.attempts).toBe(0)

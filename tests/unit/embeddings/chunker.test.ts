@@ -1,8 +1,17 @@
 import { describe, expect, it } from 'vitest'
 import { ItemKind } from '@/types/contracts'
-import { chunkContent, SHORT_ITEM_TOKEN_THRESHOLD, TARGET_CHUNK_TOKENS } from '@/lib/embeddings/chunker'
+import {
+  chunkContent,
+  SHORT_ITEM_TOKEN_THRESHOLD,
+  TARGET_CHUNK_TOKENS,
+} from '@/lib/embeddings/chunker'
 
-const baseMeta = { userId: 1, title: 'My Item', url: 'https://example.com/x', publishedAt: 1_700_000_000_000 }
+const baseMeta = {
+  userId: 1,
+  title: 'My Item',
+  url: 'https://example.com/x',
+  publishedAt: 1_700_000_000_000,
+}
 
 describe('chunkContent — short, self-contained items', () => {
   it('produces exactly one chunk for a 40-word tweet', () => {
@@ -25,14 +34,19 @@ describe('chunkContent — short, self-contained items', () => {
 
 describe('chunkContent — contextual retrieval prefix', () => {
   it('prepends the item title and a human description of its kind before embedding', () => {
-    const chunks = chunkContent({ ...baseMeta, title: 'pretty-charts', kind: ItemKind.Github, contentText: 'Renders bar charts.' })
+    const chunks = chunkContent({
+      ...baseMeta,
+      title: 'pretty-charts',
+      kind: ItemKind.Github,
+      contentText: 'Renders bar charts.',
+    })
     expect(chunks[0]?.text).toContain('pretty-charts')
     expect(chunks[0]?.text).toContain('a GitHub repository')
     expect(chunks[0]?.text).toContain('Renders bar charts.')
   })
 
   it('describes each kind distinctly', () => {
-    const kinds: Array<[typeof ItemKind[keyof typeof ItemKind], string]> = [
+    const kinds: Array<[(typeof ItemKind)[keyof typeof ItemKind], string]> = [
       [ItemKind.Video, 'a video'],
       [ItemKind.Article, 'an article'],
       [ItemKind.Social, 'a social media post'],
@@ -49,9 +63,10 @@ describe('chunkContent — contextual retrieval prefix', () => {
 
 describe('chunkContent — long content', () => {
   function longArticle(sentenceCount: number): string {
-    return Array.from({ length: sentenceCount }, (_, i) => `This is sentence number ${i} in the article.`).join(
-      ' ',
-    )
+    return Array.from(
+      { length: sentenceCount },
+      (_, i) => `This is sentence number ${i} in the article.`,
+    ).join(' ')
   }
 
   it('splits into multiple chunks once content exceeds the target chunk size', () => {
@@ -77,7 +92,11 @@ describe('chunkContent — long content', () => {
     const first = chunks[0]?.text ?? ''
     const second = chunks[1]?.text ?? ''
     // The last sentence of chunk 0 should reappear near the start of chunk 1.
-    const lastSentenceOfFirst = first.trim().split(/(?<=\.)\s+/).at(-1) ?? ''
+    const lastSentenceOfFirst =
+      first
+        .trim()
+        .split(/(?<=\.)\s+/)
+        .at(-1) ?? ''
     expect(lastSentenceOfFirst.length).toBeGreaterThan(0)
     expect(second).toContain(lastSentenceOfFirst.replace(/\.$/, ''))
   })

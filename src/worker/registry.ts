@@ -33,7 +33,10 @@ export interface JobRegistry {
 
 function placeholder<P extends JobPayload>(name: P['name']): JobHandler<P> {
   return async (payload) => {
-    logger.warn({ jobName: name, payload }, `worker: '${name}' has no real handler yet (P7 placeholder) — no-op`)
+    logger.warn(
+      { jobName: name, payload },
+      `worker: '${name}' has no real handler yet (P7 placeholder) — no-op`,
+    )
   }
 }
 

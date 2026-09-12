@@ -81,7 +81,10 @@ export class ArticleExtractor implements Extractor {
         run: async () => {
           let res
           try {
-            res = await this.http.request(url, { headers: BROWSER_LIKE_HEADERS, timeoutMs: SERVER_FETCH_TIMEOUT_MS })
+            res = await this.http.request(url, {
+              headers: BROWSER_LIKE_HEADERS,
+              timeoutMs: SERVER_FETCH_TIMEOUT_MS,
+            })
           } catch {
             return null // total network failure — nothing for rung 3 to read either
           }
@@ -104,7 +107,10 @@ export class ArticleExtractor implements Extractor {
   }
 }
 
-function extractWithReadability(html: string, url: string): Omit<ExtractedContent, 'extractionTier'> | null {
+function extractWithReadability(
+  html: string,
+  url: string,
+): Omit<ExtractedContent, 'extractionTier'> | null {
   const dom = new JSDOM(html, { url })
   const reader = new Readability(dom.window.document)
   const article = reader.parse()
@@ -128,14 +134,17 @@ function extractMetaTagsOnly(html: string, url: string): Omit<ExtractedContent, 
   const dom = new JSDOM(html, { url })
   const doc = dom.window.document
   const og = (property: string): string | undefined =>
-    doc.querySelector(`meta[property="og:${property}"]`)?.getAttribute('content')?.trim() || undefined
+    doc.querySelector(`meta[property="og:${property}"]`)?.getAttribute('content')?.trim() ||
+    undefined
   const metaName = (name: string): string | undefined =>
     doc.querySelector(`meta[name="${name}"]`)?.getAttribute('content')?.trim() || undefined
 
   const title = og('title') ?? doc.querySelector('title')?.textContent?.trim() ?? undefined
   const description = og('description') ?? metaName('description')
   const author = metaName('author')
-  const publishedRaw = doc.querySelector('meta[property="article:published_time"]')?.getAttribute('content')
+  const publishedRaw = doc
+    .querySelector('meta[property="article:published_time"]')
+    ?.getAttribute('content')
   const publishedAtMs = publishedRaw ? Date.parse(publishedRaw) : NaN
 
   return {

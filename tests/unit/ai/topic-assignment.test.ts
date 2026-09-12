@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { EmbeddingProvider } from '@/types/contracts'
-import { assignTopic, DEFAULT_TOPIC_DISTANCE_THRESHOLD, type ExistingTopic } from '@/lib/ai/topic-assignment'
+import {
+  assignTopic,
+  DEFAULT_TOPIC_DISTANCE_THRESHOLD,
+  type ExistingTopic,
+} from '@/lib/ai/topic-assignment'
 
 function fakeEmbeddingProvider(vectorsByText: Record<string, number[]>): EmbeddingProvider {
   return {

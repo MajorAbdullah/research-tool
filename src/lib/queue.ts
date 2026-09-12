@@ -196,7 +196,11 @@ export function createJobQueue(sqlite: Database.Database): JobQueue {
 
       const row = exhausted
         ? failPermanentlyStmt.get(humanReadableError, id)
-        : rescheduleStmt.get(Date.now() + computeBackoffMs(current.attempts, options), humanReadableError, id)
+        : rescheduleStmt.get(
+            Date.now() + computeBackoffMs(current.attempts, options),
+            humanReadableError,
+            id,
+          )
 
       if (!row) throw new Error(`fail: update produced no row for id ${id}`)
       return parseRow(row)

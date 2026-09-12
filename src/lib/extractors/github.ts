@@ -104,10 +104,13 @@ export class GithubExtractor implements Extractor {
 
   private async fetchReadmeText(owner: string, repo: string): Promise<string> {
     try {
-      const readmeRes = await this.http.request(`${GITHUB_API_BASE}/repos/${owner}/${repo}/readme`, {
-        headers: this.headers(),
-        timeoutMs: REQUEST_TIMEOUT_MS,
-      })
+      const readmeRes = await this.http.request(
+        `${GITHUB_API_BASE}/repos/${owner}/${repo}/readme`,
+        {
+          headers: this.headers(),
+          timeoutMs: REQUEST_TIMEOUT_MS,
+        },
+      )
       if (!readmeRes.ok) return ''
       const readmeData = parseJson<GithubReadmeResponse>(readmeRes, owner, repo)
       return Buffer.from(readmeData.content, 'base64').toString('utf-8')
@@ -130,7 +133,9 @@ export class GithubExtractor implements Extractor {
     if (res.ok) return
 
     if (res.status === 404) {
-      throw new ExtractionError('not_found', `GitHub repo not found: ${owner}/${repo}`, { retryable: false })
+      throw new ExtractionError('not_found', `GitHub repo not found: ${owner}/${repo}`, {
+        retryable: false,
+      })
     }
 
     const remaining = res.headers['x-ratelimit-remaining']
@@ -146,7 +151,10 @@ export class GithubExtractor implements Extractor {
       )
     }
 
-    throw new ExtractionError('network_error', `GitHub API returned ${res.status} for ${owner}/${repo}`)
+    throw new ExtractionError(
+      'network_error',
+      `GitHub API returned ${res.status} for ${owner}/${repo}`,
+    )
   }
 }
 

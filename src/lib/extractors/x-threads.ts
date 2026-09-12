@@ -101,13 +101,16 @@ function walkThread(html: string, url: string): Omit<ExtractedContent, 'extracti
   const articles = Array.from(doc.querySelectorAll(POST_SELECTOR))
   if (articles.length === 0) return null
 
-  const posts = articles.map((node) => node.textContent?.trim() ?? '').filter((text) => text.length > 0)
+  const posts = articles
+    .map((node) => node.textContent?.trim() ?? '')
+    .filter((text) => text.length > 0)
   if (posts.length === 0) return null
 
   // The permalink (`/<handle>/status/<id>`) is the one durable anchor the extension's own walker
   // depends on too — reuse it here to pull the author handle rather than a chrome-dependent
   // selector.
-  const firstPermalinkHref = articles[0]?.querySelector('a[href*="/status/"]')?.getAttribute('href') ?? ''
+  const firstPermalinkHref =
+    articles[0]?.querySelector('a[href*="/status/"]')?.getAttribute('href') ?? ''
   const authorHandle = STATUS_PERMALINK_PATTERN.exec(firstPermalinkHref)?.[1]
 
   return {
@@ -121,7 +124,8 @@ function extractOgTags(html: string, url: string): Omit<ExtractedContent, 'extra
   const dom = new JSDOM(html, { url })
   const doc = dom.window.document
   const og = (property: string): string | undefined =>
-    doc.querySelector(`meta[property="og:${property}"]`)?.getAttribute('content')?.trim() || undefined
+    doc.querySelector(`meta[property="og:${property}"]`)?.getAttribute('content')?.trim() ||
+    undefined
 
   const title = og('title') ?? doc.querySelector('title')?.textContent?.trim() ?? undefined
   const description = og('description')

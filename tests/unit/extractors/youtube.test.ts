@@ -24,7 +24,7 @@ describe('YoutubeExtractor', () => {
       http: createFakeHttpClient([{ match: '/oembed', outcomes: [respondWith(OEMBED_SUCCESS)] }]),
     })
 
-    const transcript = "This is the client-captured transcript text for the video."
+    const transcript = 'This is the client-captured transcript text for the video.'
     const result = await extractor.extract(WATCH_URL, { transcript })
 
     expect(result.extractionTier).toBe(ExtractionTier.Full)
@@ -32,7 +32,10 @@ describe('YoutubeExtractor', () => {
     expect(result.title).toBe('Building a Local-First Search Index With SQLite FTS5')
     expect(result.author).toBe('Sieve Engineering')
     expect(result.thumbnailUrl).toBe('https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg')
-    expect(result.kindFields).toMatchObject({ videoId: 'dQw4w9WgXcQ', transcriptSource: 'client_capture' })
+    expect(result.kindFields).toMatchObject({
+      videoId: 'dQw4w9WgXcQ',
+      transcriptSource: 'client_capture',
+    })
   })
 
   it('rung 1 still succeeds as "full" even if the best-effort oEmbed call fails', async () => {

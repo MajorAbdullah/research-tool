@@ -26,7 +26,7 @@ import * as schema from './schema'
 declare global {
   // `var` (not let/const) is required here — TS only merges global augmentations declared this
   // way. This is a type-only ambient declaration; it has no runtime effect of its own.
-   
+
   var __sieveSqlite: Database.Database | undefined
 }
 

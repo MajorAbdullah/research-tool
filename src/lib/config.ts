@@ -37,7 +37,9 @@ function booleanFromEnv(defaultValue: boolean) {
   return z
     .string()
     .optional()
-    .transform((raw) => (raw === undefined || raw === '' ? defaultValue : raw.trim().toLowerCase() === 'true'))
+    .transform((raw) =>
+      raw === undefined || raw === '' ? defaultValue : raw.trim().toLowerCase() === 'true',
+    )
 }
 
 /** Comma-separated model-id list -> non-empty `string[]`, trimmed, empty entries dropped. */
@@ -64,7 +66,10 @@ const EnvSchema = z
   .object({
     // --- Server ---
     APP_NAME: z.string().min(1).default('Sieve'),
-    APP_URL: z.string().url('APP_URL must be a full URL, e.g. http://localhost:3060').default('http://localhost:3060'),
+    APP_URL: z
+      .string()
+      .url('APP_URL must be a full URL, e.g. http://localhost:3060')
+      .default('http://localhost:3060'),
     PORT: z.coerce.number().int().positive().default(3060),
 
     // --- Database ---
@@ -73,12 +78,18 @@ const EnvSchema = z
     // --- Auth ---
     AUTH_SECRET: z
       .string()
-      .min(16, 'AUTH_SECRET must be at least 16 characters — generate one with `openssl rand -base64 32`'),
+      .min(
+        16,
+        'AUTH_SECRET must be at least 16 characters — generate one with `openssl rand -base64 32`',
+      ),
     SEED_USER_EMAIL: z.string().email('SEED_USER_EMAIL must be a valid email address'),
     SEED_USER_PASSWORD: z.string().min(1, 'SEED_USER_PASSWORD is required'),
     EXTENSION_TOKEN: z
       .string()
-      .min(16, 'EXTENSION_TOKEN must be at least 16 characters — generate one with `openssl rand -hex 32`'),
+      .min(
+        16,
+        'EXTENSION_TOKEN must be at least 16 characters — generate one with `openssl rand -hex 32`',
+      ),
 
     // --- GitHub extraction (optional — falls back toward metadata_only without it) ---
     // `.env.example` ships this as `GITHUB_PAT=` (present, blank) when unset — that must parse

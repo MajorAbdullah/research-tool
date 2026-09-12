@@ -129,5 +129,9 @@ export function chunkContent(input: ChunkInput): ChunkResult[] {
   }
   flush()
 
-  return windows.map((body, ord) => ({ ...meta, ord, text: contextualize(input.title, input.kind, body) }))
+  return windows.map((body, ord) => ({
+    ...meta,
+    ord,
+    text: contextualize(input.title, input.kind, body),
+  }))
 }

@@ -5,7 +5,12 @@ import { BudgetManager } from '@/lib/ai/budget'
 import { TokenBucket } from '@/lib/ai/rate-limiter'
 import { createInMemoryLlmCallLog } from '@/lib/ai/llm-call-log'
 import { createInMemorySettingsPort } from '@/lib/ai/settings-store'
-import { BudgetExhaustedError, ChainExhaustedError, OpenRouterHttpError, LlmTimeoutError } from '@/lib/ai/errors'
+import {
+  BudgetExhaustedError,
+  ChainExhaustedError,
+  OpenRouterHttpError,
+  LlmTimeoutError,
+} from '@/lib/ai/errors'
 
 function makeDeps(overrides: Partial<ChainDeps> = {}): ChainDeps {
   // Resolved field-by-field (not `{...defaults, ...overrides}`) because `Partial<ChainDeps>`
@@ -17,7 +22,8 @@ function makeDeps(overrides: Partial<ChainDeps> = {}): ChainDeps {
     lane: overrides.lane ?? 'background',
     // High capacity/refill so pacing never blocks these tests — pacing itself is
     // rate-limiter.test.ts's job, not chain.ts's.
-    rateLimiter: overrides.rateLimiter ?? new TokenBucket({ capacity: 1000, refillPerMinute: 6000 }),
+    rateLimiter:
+      overrides.rateLimiter ?? new TokenBucket({ capacity: 1000, refillPerMinute: 6000 }),
     callLog: overrides.callLog ?? createInMemoryLlmCallLog(),
     promptVersion: overrides.promptVersion ?? 'v1',
     apiKey: overrides.apiKey ?? 'test-key',
@@ -60,7 +66,12 @@ describe('runChain', () => {
 
     await runChain('enrich', ['model-a', 'model-b', 'model-c'], deps, async (model) => {
       if (model !== 'model-c') throw new OpenRouterHttpError(503, model, 'unavailable')
-      return { value: 'ok', resolvedModel: 'model-c-resolved', promptTokens: 7, completionTokens: 3 }
+      return {
+        value: 'ok',
+        resolvedModel: 'model-c-resolved',
+        promptTokens: 7,
+        completionTokens: 3,
+      }
     })
 
     expect(callLog.entries).toHaveLength(1)

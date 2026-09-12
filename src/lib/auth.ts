@@ -43,7 +43,8 @@ export function verifyPassword(hash: string, password: string): Promise<boolean>
  * password. `authorize` verifies against this when the submitted email doesn't match any user,
  * so "no such user" costs the same one argon2 verification as "wrong password for a real user".
  */
-const DUMMY_HASH = '$argon2id$v=19$m=65536,p=4,t=3$CnqARuib5Zy/GplaR5kC9w$p7WUIunqo2kANMMDSlTECMcwzWMvtOEWYCmcEiJGh/0'
+const DUMMY_HASH =
+  '$argon2id$v=19$m=65536,p=4,t=3$CnqARuib5Zy/GplaR5kC9w$p7WUIunqo2kANMMDSlTECMcwzWMvtOEWYCmcEiJGh/0'
 
 // ---------------------------------------------------------------------------
 // NextAuth

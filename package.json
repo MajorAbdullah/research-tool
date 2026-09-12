@@ -28,7 +28,8 @@
     "eval:rag": "vitest run --config vitest.eval.config.mts eval/generation",
     "build:ext": "pnpm --filter sieve-extension build",
     "test:integration": "vitest run tests/integration",
-    "test:unit": "vitest run tests/unit src"
+    "test:unit": "vitest run tests/unit src",
+    "smoke:ai": "tsx --env-file=.env scripts/smoke-ai.ts"
   },
   "dependencies": {
     "next": "16.3.5",

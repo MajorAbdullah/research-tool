@@ -9,12 +9,7 @@
  *    deliberate — see github.ts / pdf.ts module comments.
  */
 export type ExtractionErrorCode =
-  | 'unsupported_url'
-  | 'not_found'
-  | 'rate_limited'
-  | 'blocked'
-  | 'invalid_pdf'
-  | 'network_error'
+  'unsupported_url' | 'not_found' | 'rate_limited' | 'blocked' | 'invalid_pdf' | 'network_error'
 
 export interface ExtractionErrorOptions {
   /** Defaults per-code (see DEFAULT_RETRYABLE) — override only when a caller knows better. */

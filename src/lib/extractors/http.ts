@@ -83,10 +83,14 @@ async function performRequest(url: string, options: HttpRequestOptions): Promise
     rawHeaders = res.headers
     bodyBuffer = Buffer.from(await res.body.arrayBuffer())
   } catch (err) {
-    throw new ExtractionError('network_error', `Request to ${safeUrl(url)} failed: ${describeError(err)}`, {
-      retryable: true,
-      cause: err,
-    })
+    throw new ExtractionError(
+      'network_error',
+      `Request to ${safeUrl(url)} failed: ${describeError(err)}`,
+      {
+        retryable: true,
+        cause: err,
+      },
+    )
   }
 
   return {
@@ -97,7 +101,9 @@ async function performRequest(url: string, options: HttpRequestOptions): Promise
   }
 }
 
-function normalizeHeaders(headers: Record<string, string | string[] | undefined>): Record<string, string> {
+function normalizeHeaders(
+  headers: Record<string, string | string[] | undefined>,
+): Record<string, string> {
   const normalized: Record<string, string> = {}
   for (const [key, value] of Object.entries(headers)) {
     if (value === undefined) continue

@@ -111,7 +111,10 @@ describe('enrichItem — happy path', () => {
     const structured = vi.fn(async (messages: LLMMessage[]) => {
       const system = messages.find((m) => m.role === 'system')
       capturedSystems.push(system?.content ?? '')
-      return structuredResult({ ...validArticleData, kindFields: { what_it_does: 'x', primary_use_case: 'y' } })
+      return structuredResult({
+        ...validArticleData,
+        kindFields: { what_it_does: 'x', primary_use_case: 'y' },
+      })
     })
     const provider = fakeProvider(structured)
 
@@ -138,7 +141,10 @@ describe('enrichItem — happy path', () => {
     const provider = fakeProvider(structured)
 
     const outcome = await enrichItem(
-      baseInput({ kind: ItemKind.Github, extractorKindFields: { language: 'TypeScript', stars: 1 } }),
+      baseInput({
+        kind: ItemKind.Github,
+        extractorKindFields: { language: 'TypeScript', stars: 1 },
+      }),
       { provider, embeddingProvider: fakeEmbeddingProvider() },
     )
 
@@ -153,7 +159,9 @@ describe('enrichItem — happy path', () => {
   })
 
   it('assigns to an existing topic instead of creating a near-duplicate', async () => {
-    const structured = vi.fn(async () => structuredResult({ ...validArticleData, topic: 'LLM Agents' }))
+    const structured = vi.fn(async () =>
+      structuredResult({ ...validArticleData, topic: 'LLM Agents' }),
+    )
     const provider = fakeProvider(structured)
     const embeddingProvider = fakeEmbeddingProvider({
       'LLM Agents': [0.99, Math.sqrt(1 - 0.99 ** 2)],
@@ -199,7 +207,10 @@ describe('enrichItem — graceful degradation, never a crash', () => {
       throw new BudgetExhaustedError(resetAt, 'background')
     })
 
-    const outcome = await enrichItem(baseInput(), { provider, embeddingProvider: fakeEmbeddingProvider() })
+    const outcome = await enrichItem(baseInput(), {
+      provider,
+      embeddingProvider: fakeEmbeddingProvider(),
+    })
     expect(outcome).toEqual({ ok: false, reason: 'budget_exhausted', resetAt })
   })
 
@@ -208,7 +219,10 @@ describe('enrichItem — graceful degradation, never a crash', () => {
       throw new ChainExhaustedError('enrich', [{ model: 'm1', status: 503, message: 'down' }])
     })
 
-    const outcome = await enrichItem(baseInput(), { provider, embeddingProvider: fakeEmbeddingProvider() })
+    const outcome = await enrichItem(baseInput(), {
+      provider,
+      embeddingProvider: fakeEmbeddingProvider(),
+    })
     expect(outcome.ok).toBe(false)
     if (!outcome.ok) {
       expect(outcome.reason).toBe('model_unavailable')
@@ -220,7 +234,10 @@ describe('enrichItem — graceful degradation, never a crash', () => {
       throw new SchemaValidationError('m1', 'tags: too many')
     })
 
-    const outcome = await enrichItem(baseInput(), { provider, embeddingProvider: fakeEmbeddingProvider() })
+    const outcome = await enrichItem(baseInput(), {
+      provider,
+      embeddingProvider: fakeEmbeddingProvider(),
+    })
     expect(outcome.ok).toBe(false)
     if (!outcome.ok) expect(outcome.reason).toBe('model_unavailable')
   })

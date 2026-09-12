@@ -96,7 +96,9 @@ describe('withRetry', () => {
       throw new Error('always fails')
     })
 
-    await expect(withRetry(fn, { maxAttempts: 3, sleep: async () => {} })).rejects.toThrow('always fails')
+    await expect(withRetry(fn, { maxAttempts: 3, sleep: async () => {} })).rejects.toThrow(
+      'always fails',
+    )
     expect(fn).toHaveBeenCalledTimes(3)
   })
 

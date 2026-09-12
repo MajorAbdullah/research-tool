@@ -32,8 +32,16 @@ describe('scopedTo', () => {
     const sqlite = createScratchDb()
     const db = drizzle(sqlite)
 
-    const [userA] = db.insert(users).values({ email: 'a@example.com', passwordHash: 'x' }).returning().all()
-    const [userB] = db.insert(users).values({ email: 'b@example.com', passwordHash: 'x' }).returning().all()
+    const [userA] = db
+      .insert(users)
+      .values({ email: 'a@example.com', passwordHash: 'x' })
+      .returning()
+      .all()
+    const [userB] = db
+      .insert(users)
+      .values({ email: 'b@example.com', passwordHash: 'x' })
+      .returning()
+      .all()
     if (!userA || !userB) throw new Error('expected both users to be inserted')
 
     db.insert(items)
@@ -69,7 +77,11 @@ describe('scopedTo', () => {
   it('combines with an extra condition via AND, dropping undefined filters', () => {
     const sqlite = createScratchDb()
     const db = drizzle(sqlite)
-    const [user] = db.insert(users).values({ email: 'a@example.com', passwordHash: 'x' }).returning().all()
+    const [user] = db
+      .insert(users)
+      .values({ email: 'a@example.com', passwordHash: 'x' })
+      .returning()
+      .all()
     if (!user) throw new Error('expected a user to be inserted')
 
     db.insert(items)

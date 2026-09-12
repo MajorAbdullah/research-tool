@@ -18,7 +18,9 @@ describe('XThreadsExtractor', () => {
 
   it('rung 1: walks an 8-post thread capture, concatenating posts in order, as "full"', async () => {
     const extractor = new XThreadsExtractor({
-      http: createFakeHttpClient([{ match: STATUS_URL, outcomes: [networkError('must not be called')] }]),
+      http: createFakeHttpClient([
+        { match: STATUS_URL, outcomes: [networkError('must not be called')] },
+      ]),
     })
 
     const result = await extractor.extract(STATUS_URL, { html: THREAD_8_POSTS })
@@ -55,7 +57,9 @@ describe('XThreadsExtractor', () => {
       http: createFakeHttpClient([{ match: STATUS_URL, outcomes: [respondWith(SINGLE_TWEET_OG)] }]),
     })
 
-    const result = await extractor.extract(STATUS_URL, { html: '<html><body><nav>just chrome</nav></body></html>' })
+    const result = await extractor.extract(STATUS_URL, {
+      html: '<html><body><nav>just chrome</nav></body></html>',
+    })
 
     expect(result.extractionTier).toBe(ExtractionTier.Partial)
     expect(result.title).toBe('sieve.build on X')

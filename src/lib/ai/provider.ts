@@ -75,7 +75,11 @@ export class OpenRouterProvider implements LLMProvider {
       this.chainDeps(timeoutMs),
       async (model) => {
         const response = await callChatCompletion(
-          { model, messages: messages.map((m) => ({ role: m.role, content: m.content })), max_tokens: maxTokens },
+          {
+            model,
+            messages: messages.map((m) => ({ role: m.role, content: m.content })),
+            max_tokens: maxTokens,
+          },
           { apiKey: this.opts.apiKey, timeoutMs, fetchImpl: this.opts.fetchImpl },
         )
         const choice = response.choices[0]
@@ -114,7 +118,9 @@ export class OpenRouterProvider implements LLMProvider {
       this.opts.capabilityProbe,
       maxTokens,
     )
-    const chainName = route.routedToFallback ? `${this.opts.chainName}(long-content)` : this.opts.chainName
+    const chainName = route.routedToFallback
+      ? `${this.opts.chainName}(long-content)`
+      : this.opts.chainName
 
     const result = await runChain(
       chainName,

@@ -53,7 +53,9 @@ describe('loadConfig', () => {
   })
 
   it('rejects a malformed SEED_USER_EMAIL', () => {
-    expect(() => loadConfig({ ...VALID_ENV, SEED_USER_EMAIL: 'not-an-email' })).toThrow(/SEED_USER_EMAIL/)
+    expect(() => loadConfig({ ...VALID_ENV, SEED_USER_EMAIL: 'not-an-email' })).toThrow(
+      /SEED_USER_EMAIL/,
+    )
   })
 
   it('reports every failing variable at once, not just the first', () => {
@@ -82,9 +84,9 @@ describe('loadConfig', () => {
   })
 
   it('rejects LLM_INTERACTIVE_RESERVE greater than LLM_DAILY_CAP', () => {
-    expect(() => loadConfig({ ...VALID_ENV, LLM_DAILY_CAP: '100', LLM_INTERACTIVE_RESERVE: '200' })).toThrow(
-      /LLM_INTERACTIVE_RESERVE/,
-    )
+    expect(() =>
+      loadConfig({ ...VALID_ENV, LLM_DAILY_CAP: '100', LLM_INTERACTIVE_RESERVE: '200' }),
+    ).toThrow(/LLM_INTERACTIVE_RESERVE/)
   })
 
   it('accepts an optional GITHUB_PAT when provided', () => {

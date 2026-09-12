@@ -18,7 +18,10 @@ function jsonResponse(content: string, model = 'test/model:free'): OpenRouterCha
   }
 }
 
-function toolCallResponse(argumentsJson: string, model = 'test/model:free'): OpenRouterChatResponse {
+function toolCallResponse(
+  argumentsJson: string,
+  model = 'test/model:free',
+): OpenRouterChatResponse {
   return {
     id: 'gen-2',
     model,
@@ -29,7 +32,11 @@ function toolCallResponse(argumentsJson: string, model = 'test/model:free'): Ope
           role: 'assistant',
           content: null,
           tool_calls: [
-            { id: 'call-1', type: 'function', function: { name: FORCED_TOOL_NAME, arguments: argumentsJson } },
+            {
+              id: 'call-1',
+              type: 'function',
+              function: { name: FORCED_TOOL_NAME, arguments: argumentsJson },
+            },
           ],
         },
       },

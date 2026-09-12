@@ -156,7 +156,10 @@ describe('LocalEmbeddingProvider', () => {
 
   it('respects a custom concurrency limit', async () => {
     const handle = fakeModel(30)
-    const provider = new LocalEmbeddingProvider({ loadModel: async () => handle.model, concurrency: 1 })
+    const provider = new LocalEmbeddingProvider({
+      loadModel: async () => handle.model,
+      concurrency: 1,
+    })
 
     await Promise.all([provider.embed(['a']), provider.embed(['b']), provider.embed(['c'])])
     expect(handle.maxConcurrent()).toBe(1)

@@ -36,7 +36,8 @@ export interface OpenRouterTool {
   function: OpenRouterToolFunctionDef
 }
 
-export type OpenRouterToolChoice = 'auto' | 'none' | { type: 'function'; function: { name: string } }
+export type OpenRouterToolChoice =
+  'auto' | 'none' | { type: 'function'; function: { name: string } }
 
 export interface OpenRouterResponseFormat {
   type: 'json_schema'

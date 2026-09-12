@@ -26,7 +26,9 @@ import { createJobQueue } from '@/lib/queue'
 
 const [, , dbPath, barrierDir, workerIdRaw, workerCountRaw] = process.argv
 if (!dbPath || !barrierDir || !workerIdRaw || !workerCountRaw) {
-  throw new Error('usage: tsx claim-worker.script.ts <sqlite-path> <barrier-dir> <worker-id> <worker-count>')
+  throw new Error(
+    'usage: tsx claim-worker.script.ts <sqlite-path> <barrier-dir> <worker-id> <worker-count>',
+  )
 }
 const workerId = Number(workerIdRaw)
 const workerCount = Number(workerCountRaw)

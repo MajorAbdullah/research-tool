@@ -9,33 +9,57 @@
 -->
 <article>
   <a href="/sieve_build/status/1953405076756570301">view</a>
-  <span class="font-chirp">1/ We kept losing YouTube videos to "title never mentions the topic." Here's the extraction ladder we shipped to fix it.</span>
+  <span class="font-chirp"
+    >1/ We kept losing YouTube videos to "title never mentions the topic." Here's the extraction
+    ladder we shipped to fix it.</span
+  >
 </article>
 <article>
   <a href="/sieve_build/status/1953405076756570302">view</a>
-  <span class="font-chirp">2/ The server runs on a datacenter IP. YouTube, Instagram and X all treat that as a bot after a few hundred requests.</span>
+  <span class="font-chirp"
+    >2/ The server runs on a datacenter IP. YouTube, Instagram and X all treat that as a bot after a
+    few hundred requests.</span
+  >
 </article>
 <article>
   <a href="/sieve_build/status/1953405076756570303">view</a>
-  <span class="font-chirp">3/ So the browser extension captures content client-side, on your own residential IP, already logged in.</span>
+  <span class="font-chirp"
+    >3/ So the browser extension captures content client-side, on your own residential IP, already
+    logged in.</span
+  >
 </article>
 <article>
   <a href="/sieve_build/status/1953405076756570304">view</a>
-  <span class="font-chirp">4/ It grabs the rendered transcript panel, the DOM, the caption — whatever the site would show a real logged-in user.</span>
+  <span class="font-chirp"
+    >4/ It grabs the rendered transcript panel, the DOM, the caption — whatever the site would show
+    a real logged-in user.</span
+  >
 </article>
 <article>
   <a href="/sieve_build/status/1953405076756570305">view</a>
-  <span class="font-chirp">5/ That gets POSTed to the server alongside the URL. No proxies, no stored cookies, no arms race.</span>
+  <span class="font-chirp"
+    >5/ That gets POSTed to the server alongside the URL. No proxies, no stored cookies, no arms
+    race.</span
+  >
 </article>
 <article>
   <a href="/sieve_build/status/1953405076756570306">view</a>
-  <span class="font-chirp">6/ Server-side fallbacks still exist for when there's no extension capture — oEmbed, timedtext, OG tags.</span>
+  <span class="font-chirp"
+    >6/ Server-side fallbacks still exist for when there's no extension capture — oEmbed, timedtext,
+    OG tags.</span
+  >
 </article>
 <article>
   <a href="/sieve_build/status/1953405076756570307">view</a>
-  <span class="font-chirp">7/ Every one of those fallbacks is allowed to fail. What's not allowed is failing silently.</span>
+  <span class="font-chirp"
+    >7/ Every one of those fallbacks is allowed to fail. What's not allowed is failing
+    silently.</span
+  >
 </article>
 <article>
   <a href="/sieve_build/status/1953405076756570308">view</a>
-  <span class="font-chirp">8/ Every item records which rung of the ladder actually succeeded, and the UI shows it. Degradation is visible, always.</span>
+  <span class="font-chirp"
+    >8/ Every item records which rung of the ladder actually succeeded, and the UI shows it.
+    Degradation is visible, always.</span
+  >
 </article>

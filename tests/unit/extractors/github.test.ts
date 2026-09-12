@@ -13,7 +13,10 @@ const NOT_FOUND_JSON = fixtureText('github/not-found.json')
 const RATE_LIMITED_JSON = fixtureText('github/rate-limited.json')
 
 function readmeApiResponse(markdown: string): string {
-  return JSON.stringify({ content: Buffer.from(markdown, 'utf-8').toString('base64'), encoding: 'base64' })
+  return JSON.stringify({
+    content: Buffer.from(markdown, 'utf-8').toString('base64'),
+    encoding: 'base64',
+  })
 }
 
 describe('GithubExtractor', () => {
@@ -73,7 +76,9 @@ describe('GithubExtractor', () => {
 
   it('throws a not_found ExtractionError on a 404, and never returns metadata_only', async () => {
     const extractor = new GithubExtractor({
-      http: createFakeHttpClient([{ match: REPO_URL, outcomes: [respondWith(NOT_FOUND_JSON, { status: 404 })] }]),
+      http: createFakeHttpClient([
+        { match: REPO_URL, outcomes: [respondWith(NOT_FOUND_JSON, { status: 404 })] },
+      ]),
     })
 
     await expect(extractor.extract('https://github.com/torvalds/linux')).rejects.toMatchObject({
@@ -91,7 +96,10 @@ describe('GithubExtractor', () => {
           outcomes: [
             respondWith(RATE_LIMITED_JSON, {
               status: 403,
-              headers: { 'x-ratelimit-remaining': '0', 'x-ratelimit-reset': String(resetAtSeconds) },
+              headers: {
+                'x-ratelimit-remaining': '0',
+                'x-ratelimit-reset': String(resetAtSeconds),
+              },
             }),
           ],
         },
@@ -121,7 +129,8 @@ describe('GithubExtractor', () => {
         async request(url, options) {
           calls.push({ url })
           if (options?.headers?.['authorization'] === 'Bearer secret-pat') sawAuthHeader = true
-          if (url.endsWith('/readme')) return { status: 404, ok: false, headers: {}, body: Buffer.from('') }
+          if (url.endsWith('/readme'))
+            return { status: 404, ok: false, headers: {}, body: Buffer.from('') }
           return { status: 200, ok: true, headers: {}, body: Buffer.from(REPO_JSON) }
         },
       },

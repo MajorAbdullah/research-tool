@@ -16,7 +16,8 @@ export interface TokenBucketOptions {
   sleep?: (ms: number) => Promise<void>
 }
 
-const defaultSleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
+const defaultSleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms))
 
 export class TokenBucket {
   private readonly capacity: number
@@ -62,7 +63,7 @@ export class TokenBucket {
     })
     await myTurn
     try {
-      await this.waitForToken();
+      await this.waitForToken()
     } finally {
       release()
     }

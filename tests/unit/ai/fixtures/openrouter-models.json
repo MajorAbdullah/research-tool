@@ -30,12 +30,7 @@
     {
       "id": "nex-agi/nex-n2.5-pro:free",
       "context_length": 262144,
-      "supported_parameters": [
-        "max_tokens",
-        "temperature",
-        "response_format",
-        "structured_outputs"
-      ]
+      "supported_parameters": ["max_tokens", "temperature", "response_format", "structured_outputs"]
     },
     {
       "id": "openrouter/free",
@@ -56,7 +51,14 @@
       "id": "nvidia/nemotron-3-ultra-550b-a55b:free",
       "canonical_slug": "nvidia/nemotron-3-ultra-550b-a55b-2026-08-01",
       "context_length": 1000000,
-      "supported_parameters": ["max_tokens", "temperature", "top_p", "tools", "tool_choice", "reasoning"]
+      "supported_parameters": [
+        "max_tokens",
+        "temperature",
+        "top_p",
+        "tools",
+        "tool_choice",
+        "reasoning"
+      ]
     },
     {
       "id": "thinkingmachines/inkling:free",

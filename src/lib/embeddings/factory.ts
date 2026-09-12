@@ -9,7 +9,10 @@
 
 import type { EmbeddingProvider } from '@/types/contracts'
 import { getLocalEmbeddingProvider, type LocalEmbeddingProviderOptions } from './local-provider'
-import { OpenRouterEmbeddingProvider, type OpenRouterEmbeddingProviderOptions } from './openrouter-provider'
+import {
+  OpenRouterEmbeddingProvider,
+  type OpenRouterEmbeddingProviderOptions,
+} from './openrouter-provider'
 
 export type EmbeddingProviderKind = 'local' | 'openrouter'
 
@@ -40,7 +43,7 @@ export function createEmbeddingProvider(selection: EmbeddingProviderSelection): 
   }
   if (!selection.openRouter) {
     throw new Error(
-      "EMBEDDING_PROVIDER=openrouter requires OpenRouterEmbeddingProviderOptions (apiKey + " +
+      'EMBEDDING_PROVIDER=openrouter requires OpenRouterEmbeddingProviderOptions (apiKey + ' +
         'dimensions) to be supplied explicitly in code — there is no safe default dimension to ' +
         'assume for a hosted embedding model. This path is a deliberate opt-in, not a drop-in env ' +
         'toggle; see openrouter-provider.ts and .env.example’s EMBEDDING_PROVIDER documentation.',

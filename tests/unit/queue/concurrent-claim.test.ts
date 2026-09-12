@@ -62,9 +62,13 @@ describe('claimNext under real concurrent OS processes', () => {
 
     const workerCount = 6
     const runs = Array.from({ length: workerCount }, (_, i) =>
-      execFileAsync(TSX_BIN, [WORKER_SCRIPT, dbPath, barrierDir, String(i + 1), String(workerCount)], {
-        timeout: 20_000,
-      }),
+      execFileAsync(
+        TSX_BIN,
+        [WORKER_SCRIPT, dbPath, barrierDir, String(i + 1), String(workerCount)],
+        {
+          timeout: 20_000,
+        },
+      ),
     )
     const results = await Promise.all(runs)
 

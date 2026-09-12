@@ -86,7 +86,12 @@ export async function assignTopic(
   }
 
   if (best && best.distance <= threshold) {
-    return { isNew: false, topicId: best.topic.id, label: best.topic.label, distance: best.distance }
+    return {
+      isNew: false,
+      topicId: best.topic.id,
+      label: best.topic.label,
+      distance: best.distance,
+    }
   }
   return { isNew: true, label: candidateLabel, distance: best?.distance }
 }

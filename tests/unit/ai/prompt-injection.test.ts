@@ -22,7 +22,13 @@ import { describe, expect, it, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import type { EmbeddingProvider, EnrichmentResult, LLMMessage, LLMProvider, LLMStructuredResult } from '@/types/contracts'
+import type {
+  EmbeddingProvider,
+  EnrichmentResult,
+  LLMMessage,
+  LLMProvider,
+  LLMStructuredResult,
+} from '@/types/contracts'
 import { ItemKind } from '@/types/contracts'
 import { stripInjectedDelimiters, wrapUntrustedContent } from '@/lib/ai/prompt-safety'
 import { loadPrompt } from '@/lib/ai/prompts'
@@ -53,7 +59,10 @@ describe('delimiter stripping (CLAUDE.md point 4)', () => {
     expect(closingCount).toBe(1)
     expect(wrapped.endsWith('</untrusted_content>')).toBe(true)
     // Everything the attacker wrote — including the fake "SYSTEM:" line — stays inside the block.
-    const blockBody = wrapped.slice('<untrusted_content>\n'.length, wrapped.lastIndexOf('</untrusted_content>'))
+    const blockBody = wrapped.slice(
+      '<untrusted_content>\n'.length,
+      wrapped.lastIndexOf('</untrusted_content>'),
+    )
     expect(blockBody).toContain('SYSTEM:')
   })
 
@@ -101,7 +110,14 @@ function fakeEmbeddingProvider(): EmbeddingProvider {
 }
 
 function structuredResult(data: unknown): LLMStructuredResult<unknown> {
-  return { data, modelRequested: 'm', modelResolved: 'm', promptTokens: 1, completionTokens: 1, schemaStrategy: 'response_format' }
+  return {
+    data,
+    modelRequested: 'm',
+    modelResolved: 'm',
+    promptTokens: 1,
+    completionTokens: 1,
+    schemaStrategy: 'response_format',
+  }
 }
 
 describe('enrichItem() end-to-end against the malicious fixture', () => {
@@ -121,14 +137,21 @@ describe('enrichItem() end-to-end against the malicious fixture', () => {
     const provider = fakeProvider(structured)
 
     const outcome = await enrichItem(
-      { title: 'pretty-charts', kind: ItemKind.Github, contentText: maliciousReadme, existingTopics: [] },
+      {
+        title: 'pretty-charts',
+        kind: ItemKind.Github,
+        contentText: maliciousReadme,
+        existingTopics: [],
+      },
       { provider, embeddingProvider: fakeEmbeddingProvider() },
     )
 
     expect(outcome.ok).toBe(true)
     if (outcome.ok) {
       expect(outcome.result.tldr).not.toMatch(/hacked/i)
-      expect(outcome.result.tags).not.toEqual(expect.arrayContaining(['verified', 'high-priority', 'approved']))
+      expect(outcome.result.tags).not.toEqual(
+        expect.arrayContaining(['verified', 'high-priority', 'approved']),
+      )
       expect(outcome.result).not.toHaveProperty('status')
     }
     expect(structured).toHaveBeenCalledTimes(1) // one request per item, even for this fixture
@@ -149,7 +172,12 @@ describe('enrichItem() end-to-end against the malicious fixture', () => {
     const provider = fakeProvider(structured)
 
     await enrichItem(
-      { title: 'pretty-charts', kind: ItemKind.Github, contentText: maliciousReadme, existingTopics: [] },
+      {
+        title: 'pretty-charts',
+        kind: ItemKind.Github,
+        contentText: maliciousReadme,
+        existingTopics: [],
+      },
       { provider, embeddingProvider: fakeEmbeddingProvider() },
     )
 
@@ -179,7 +207,9 @@ describe('worst case: a model that tries to comply with the injected instruction
       json: async () => ({
         id: 'gen',
         model: 'test/model:free',
-        choices: [{ index: 0, message: { role: 'assistant', content: JSON.stringify(compromisedPayload) } }],
+        choices: [
+          { index: 0, message: { role: 'assistant', content: JSON.stringify(compromisedPayload) } },
+        ],
         usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 },
       }),
     } as unknown as Response)

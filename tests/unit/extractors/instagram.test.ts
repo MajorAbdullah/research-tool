@@ -25,7 +25,9 @@ describe('InstagramExtractor', () => {
     expect(result.contentText).toBe(caption)
     expect(result.title).toBe('A behind-the-scenes look at the extraction ladder diagram')
     expect(result.author).toBe('sieve.build')
-    expect(result.thumbnailUrl).toBe('https://scontent.cdninstagram.com/v/t51.2885-15/sample_thumb.jpg')
+    expect(result.thumbnailUrl).toBe(
+      'https://scontent.cdninstagram.com/v/t51.2885-15/sample_thumb.jpg',
+    )
     expect(result.kindFields).toEqual({ source: 'share_sheet_caption', needsNote: false })
   })
 
@@ -56,7 +58,9 @@ describe('InstagramExtractor', () => {
 
   it('degrades to metadata_only with a needsNote flag when nothing at all is available', async () => {
     const extractor = new InstagramExtractor({
-      http: createFakeHttpClient([{ match: 'oembed', outcomes: [respondWith('', { status: 400 })] }]),
+      http: createFakeHttpClient([
+        { match: 'oembed', outcomes: [respondWith('', { status: 400 })] },
+      ]),
     })
 
     const result = await extractor.extract(REEL_URL)

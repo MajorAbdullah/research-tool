@@ -27,7 +27,11 @@ export class ScopingError extends Error {
  * `extra` conditions that are `undefined` are dropped, so callers can pass an optional filter
  * (`status ? eq(items.status, status) : undefined`) without an `if` at every call site.
  */
-export function scopedTo(userIdColumn: AnySQLiteColumn, userId: number, ...extra: Array<SQL | undefined>): SQL {
+export function scopedTo(
+  userIdColumn: AnySQLiteColumn,
+  userId: number,
+  ...extra: Array<SQL | undefined>
+): SQL {
   const condition = and(eq(userIdColumn, userId), ...extra)
   // `and()`'s type is `SQL | undefined` because it can't statically know its argument list is
   // non-empty — we always pass at least the `eq(userIdColumn, userId)` above, so this is

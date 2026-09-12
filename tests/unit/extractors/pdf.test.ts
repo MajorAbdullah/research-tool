@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vitest'
 import { ExtractionTier } from '@/types/contracts'
 import { ExtractionError } from '@/lib/extractors/errors'
 import { PdfExtractor } from '@/lib/extractors/pdf'
-import { createFakeHttpClient, fixtureBuffer, fixtureText, networkError, respondWith } from './helpers/fake-http'
+import {
+  createFakeHttpClient,
+  fixtureBuffer,
+  fixtureText,
+  networkError,
+  respondWith,
+} from './helpers/fake-http'
 
 const SAMPLE_PDF = fixtureBuffer('pdf/sample.pdf')
 const ARXIV_ATTENTION = fixtureText('pdf/arxiv-attention-is-all-you-need.atom.xml')
@@ -39,7 +45,9 @@ describe('PdfExtractor', () => {
 
   it('throws a not_found ExtractionError on a 404 fetching the PDF bytes', async () => {
     const extractor = new PdfExtractor({
-      http: createFakeHttpClient([{ match: DIRECT_PDF_URL, outcomes: [respondWith('', { status: 404 })] }]),
+      http: createFakeHttpClient([
+        { match: DIRECT_PDF_URL, outcomes: [respondWith('', { status: 404 })] },
+      ]),
     })
 
     await expect(extractor.extract(DIRECT_PDF_URL)).rejects.toMatchObject({ code: 'not_found' })
@@ -58,7 +66,9 @@ describe('PdfExtractor', () => {
 
   it('throws a network_error ExtractionError when the fetch itself fails, never returning metadata_only', async () => {
     const extractor = new PdfExtractor({
-      http: createFakeHttpClient([{ match: DIRECT_PDF_URL, outcomes: [networkError('ECONNRESET')] }]),
+      http: createFakeHttpClient([
+        { match: DIRECT_PDF_URL, outcomes: [networkError('ECONNRESET')] },
+      ]),
     })
 
     await expect(extractor.extract(DIRECT_PDF_URL)).rejects.toMatchObject({ code: 'network_error' })
@@ -66,7 +76,9 @@ describe('PdfExtractor', () => {
 
   it('extracts a real arXiv abstract via the API — always "full"', async () => {
     const extractor = new PdfExtractor({
-      http: createFakeHttpClient([{ match: 'id_list=1706.03762', outcomes: [respondWith(ARXIV_ATTENTION)] }]),
+      http: createFakeHttpClient([
+        { match: 'id_list=1706.03762', outcomes: [respondWith(ARXIV_ATTENTION)] },
+      ]),
     })
 
     const result = await extractor.extract(ARXIV_ABS_URL)

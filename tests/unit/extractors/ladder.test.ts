@@ -12,7 +12,11 @@ describe('runLadder', () => {
   it('returns the first rung immediately and never calls later rungs', async () => {
     const rung2 = vi.fn()
     const rungs: Rung[] = [
-      { tier: ExtractionTier.Full, name: 'rung-1', run: async () => ({ contentText: 'from rung 1' }) },
+      {
+        tier: ExtractionTier.Full,
+        name: 'rung-1',
+        run: async () => ({ contentText: 'from rung 1' }),
+      },
       { tier: ExtractionTier.Partial, name: 'rung-2', run: rung2 },
     ]
 
@@ -32,7 +36,11 @@ describe('runLadder', () => {
           throw new Error('boom')
         },
       },
-      { tier: ExtractionTier.Partial, name: 'server-fallback', run: async () => ({ contentText: 'from rung 2' }) },
+      {
+        tier: ExtractionTier.Partial,
+        name: 'server-fallback',
+        run: async () => ({ contentText: 'from rung 2' }),
+      },
     ]
 
     const result = await runLadder(rungs, logger)
@@ -48,7 +56,11 @@ describe('runLadder', () => {
     const logger = fakeLogger()
     const rungs: Rung[] = [
       { tier: ExtractionTier.Full, name: 'client-capture', run: async () => null },
-      { tier: ExtractionTier.MetadataOnly, name: 'url-only', run: async () => ({ contentText: 'fallback' }) },
+      {
+        tier: ExtractionTier.MetadataOnly,
+        name: 'url-only',
+        run: async () => ({ contentText: 'fallback' }),
+      },
     ]
 
     const result = await runLadder(rungs, logger)

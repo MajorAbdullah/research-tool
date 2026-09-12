@@ -11,9 +11,17 @@ import { BudgetManager } from '@/lib/ai/budget'
 import { TokenBucket } from '@/lib/ai/rate-limiter'
 import { createInMemoryLlmCallLog } from '@/lib/ai/llm-call-log'
 import { createInMemorySettingsPort } from '@/lib/ai/settings-store'
-import type { FetchLike, OpenRouterChatRequest, OpenRouterChatResponse } from '@/lib/ai/openrouter-client'
+import type {
+  FetchLike,
+  OpenRouterChatRequest,
+  OpenRouterChatResponse,
+} from '@/lib/ai/openrouter-client'
 
-function capability(id: string, contextLength: number, schemaStrategy: ModelCapability['schemaStrategy']): ModelCapability {
+function capability(
+  id: string,
+  contextLength: number,
+  schemaStrategy: ModelCapability['schemaStrategy'],
+): ModelCapability {
   return { id, contextLength, supportedParameters: [], schemaStrategy }
 }
 

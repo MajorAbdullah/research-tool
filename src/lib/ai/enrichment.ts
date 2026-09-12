@@ -81,9 +81,13 @@ function buildUserMessage(input: EnrichmentInput, safeContent: string): string {
     input.existingTopics.length > 0
       ? `Existing topics: ${input.existingTopics.map((t) => t.label).join(', ')}`
       : 'Existing topics: (none yet — this is the first item, so proposing a new topic is expected.)'
-  return [`Title: ${input.title}`, `Kind: ${input.kind}`, topicsLine, '', wrapUntrustedContent(safeContent)].join(
-    '\n',
-  )
+  return [
+    `Title: ${input.title}`,
+    `Kind: ${input.kind}`,
+    topicsLine,
+    '',
+    wrapUntrustedContent(safeContent),
+  ].join('\n')
 }
 
 function mergeKindFields(
@@ -94,7 +98,10 @@ function mergeKindFields(
   return { ...(extractorFields ?? {}), ...(modelFields ?? {}) }
 }
 
-export async function enrichItem(input: EnrichmentInput, deps: EnrichmentDeps): Promise<EnrichOutcome> {
+export async function enrichItem(
+  input: EnrichmentInput,
+  deps: EnrichmentDeps,
+): Promise<EnrichOutcome> {
   const system = buildSystemPrompt(input.kind)
   const { text: safeContent } = truncateToTokenBudget(
     input.contentText,
@@ -140,7 +147,9 @@ export async function enrichItem(input: EnrichmentInput, deps: EnrichmentDeps): 
   // An existing-topic match is normalized to that topic's canonical label, so storage doesn't
   // create a near-duplicate string that only differs in wording/case from what already exists. A
   // genuinely new topic keeps the model's own proposed label untouched.
-  const finalResult: EnrichmentResult = topic.isNew ? mergedResult : { ...mergedResult, topic: topic.label }
+  const finalResult: EnrichmentResult = topic.isNew
+    ? mergedResult
+    : { ...mergedResult, topic: topic.label }
 
   return {
     ok: true,

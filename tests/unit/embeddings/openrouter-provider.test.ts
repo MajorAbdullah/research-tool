@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
-import { OpenRouterEmbeddingProvider, DEFAULT_OPENROUTER_EMBEDDING_MODEL } from '@/lib/embeddings/openrouter-provider'
+import {
+  OpenRouterEmbeddingProvider,
+  DEFAULT_OPENROUTER_EMBEDDING_MODEL,
+} from '@/lib/embeddings/openrouter-provider'
 
 function fakeFetch(data: Array<{ embedding: number[]; index: number }>) {
   return vi.fn().mockResolvedValue({
@@ -77,7 +80,9 @@ describe('OpenRouterEmbeddingProvider', () => {
 
     await provider.embedQuery('hello')
     const [, queryInit] = fetchImpl.mock.calls[0] as [string, RequestInit]
-    expect((JSON.parse(queryInit.body as string) as { input: string[] }).input).toEqual(['query: hello'])
+    expect((JSON.parse(queryInit.body as string) as { input: string[] }).input).toEqual([
+      'query: hello',
+    ])
 
     await provider.embed(['hello'])
     const [, docInit] = fetchImpl.mock.calls[1] as [string, RequestInit]

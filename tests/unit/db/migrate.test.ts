@@ -20,12 +20,29 @@ describe('runMigrations / applyMigrationSql', () => {
 
     const tableNames = new Set(
       db
-        .prepare<[], { name: string }>(`SELECT name FROM sqlite_master WHERE type IN ('table', 'view')`)
+        .prepare<[], { name: string }>(
+          `SELECT name FROM sqlite_master WHERE type IN ('table', 'view')`,
+        )
         .all()
         .map((row) => row.name),
     )
 
-    for (const expected of ['users', 'items', 'topics', 'item_topics', 'tags', 'item_tags', 'chunks', 'relations', 'jobs', 'llm_calls', 'settings', 'items_fts_source', 'items_fts', 'chunk_vec']) {
+    for (const expected of [
+      'users',
+      'items',
+      'topics',
+      'item_topics',
+      'tags',
+      'item_tags',
+      'chunks',
+      'relations',
+      'jobs',
+      'llm_calls',
+      'settings',
+      'items_fts_source',
+      'items_fts',
+      'chunk_vec',
+    ]) {
       expect(tableNames.has(expected)).toBe(true)
     }
   })

@@ -56,16 +56,23 @@ export class PdfExtractor implements Extractor {
     return this.extractPdfBytes(canonicalizeUrlSync(url))
   }
 
-  private async extractArxivAbstract(arxivId: string, originalUrl: string): Promise<ExtractedContent> {
+  private async extractArxivAbstract(
+    arxivId: string,
+    originalUrl: string,
+  ): Promise<ExtractedContent> {
     let res
     try {
       res = await this.http.request(`${ARXIV_API_BASE}?id_list=${encodeURIComponent(arxivId)}`, {
         timeoutMs: ARXIV_TIMEOUT_MS,
       })
     } catch (err) {
-      throw new ExtractionError('network_error', `arXiv API request failed for ${arxivId}: ${message(err)}`, {
-        cause: err,
-      })
+      throw new ExtractionError(
+        'network_error',
+        `arXiv API request failed for ${arxivId}: ${message(err)}`,
+        {
+          cause: err,
+        },
+      )
     }
     if (!res.ok) {
       throw new ExtractionError('network_error', `arXiv API returned ${res.status} for ${arxivId}`)
@@ -73,7 +80,9 @@ export class PdfExtractor implements Extractor {
 
     const entry = parseArxivEntry(res.body.toString('utf-8'))
     if (!entry) {
-      throw new ExtractionError('not_found', `No arXiv entry found for ${arxivId}`, { retryable: false })
+      throw new ExtractionError('not_found', `No arXiv entry found for ${arxivId}`, {
+        retryable: false,
+      })
     }
 
     const publishedAtMs = entry.published ? Date.parse(entry.published) : NaN
@@ -94,7 +103,9 @@ export class PdfExtractor implements Extractor {
     try {
       res = await this.http.request(url, { timeoutMs: PDF_FETCH_TIMEOUT_MS })
     } catch (err) {
-      throw new ExtractionError('network_error', `Failed to fetch PDF at ${url}: ${message(err)}`, { cause: err })
+      throw new ExtractionError('network_error', `Failed to fetch PDF at ${url}: ${message(err)}`, {
+        cause: err,
+      })
     }
     if (!res.ok) {
       throw new ExtractionError(
@@ -104,9 +115,13 @@ export class PdfExtractor implements Extractor {
       )
     }
     if (res.body.byteLength > MAX_PDF_BYTES) {
-      throw new ExtractionError('invalid_pdf', `PDF at ${url} exceeds the ${MAX_PDF_BYTES}-byte cap`, {
-        retryable: false,
-      })
+      throw new ExtractionError(
+        'invalid_pdf',
+        `PDF at ${url} exceeds the ${MAX_PDF_BYTES}-byte cap`,
+        {
+          retryable: false,
+        },
+      )
     }
 
     const parser = new PDFParse({ data: res.body })
@@ -141,7 +156,9 @@ export class PdfExtractor implements Extractor {
       }
     } catch (err) {
       if (err instanceof ExtractionError) throw err
-      throw new ExtractionError('invalid_pdf', `Failed to parse PDF at ${url}: ${message(err)}`, { cause: err })
+      throw new ExtractionError('invalid_pdf', `Failed to parse PDF at ${url}: ${message(err)}`, {
+        cause: err,
+      })
     } finally {
       await parser.destroy()
     }
@@ -186,10 +203,12 @@ function parseArxivEntry(xml: string): ArxivEntry | null {
   if (!title || !summary) return null
 
   const published = extractTag(entry, 'published')
-  const authors = [...entry.matchAll(/<author>\s*<name>([\s\S]*?)<\/name>\s*<\/author>/g)].map((match) =>
-    decodeXmlEntities((match[1] ?? '').trim()),
+  const authors = [...entry.matchAll(/<author>\s*<name>([\s\S]*?)<\/name>\s*<\/author>/g)].map(
+    (match) => decodeXmlEntities((match[1] ?? '').trim()),
   )
-  const categories = [...entry.matchAll(/<category[^>]*\sterm="([^"]*)"/g)].map((match) => match[1] ?? '')
+  const categories = [...entry.matchAll(/<category[^>]*\sterm="([^"]*)"/g)].map(
+    (match) => match[1] ?? '',
+  )
 
   return {
     title: decodeXmlEntities(title).replace(/\s+/g, ' ').trim(),

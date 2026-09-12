@@ -20,7 +20,9 @@ describe('ArticleExtractor', () => {
 
   it('rung 1: extracts the real article from client-captured HTML as "full"', async () => {
     const extractor = new ArticleExtractor({
-      http: createFakeHttpClient([{ match: URL, outcomes: [networkError('should never be called')] }]),
+      http: createFakeHttpClient([
+        { match: URL, outcomes: [networkError('should never be called')] },
+      ]),
     })
 
     const result = await extractor.extract(URL, { html: CLEAN_ARTICLE })
@@ -60,7 +62,9 @@ describe('ArticleExtractor', () => {
 
   it('degrades a Cloudflare-blocked fetch to metadata_only WITHOUT throwing', async () => {
     const extractor = new ArticleExtractor({
-      http: createFakeHttpClient([{ match: URL, outcomes: [respondWith(CLOUDFLARE_BLOCKED, { status: 403 })] }]),
+      http: createFakeHttpClient([
+        { match: URL, outcomes: [respondWith(CLOUDFLARE_BLOCKED, { status: 403 })] },
+      ]),
     })
 
     const result = await extractor.extract(URL)

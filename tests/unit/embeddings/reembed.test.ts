@@ -73,7 +73,9 @@ describe('reembedAll', () => {
 
     await reembedAll({ db: db as unknown as ReembedDb, provider })
 
-    const rows = db.prepare('SELECT rowid FROM chunk_vec ORDER BY rowid').all() as Array<{ rowid: number }>
+    const rows = db.prepare('SELECT rowid FROM chunk_vec ORDER BY rowid').all() as Array<{
+      rowid: number
+    }>
     expect(rows.map((r) => r.rowid)).toEqual([1, 2, 3])
   })
 
@@ -88,7 +90,8 @@ describe('reembedAll', () => {
     const provider: EmbeddingProvider = {
       model: 'typed-array-model',
       dimensions: 4,
-      embed: async (texts) => texts.map(() => new Float32Array([1, 2, 3, 4]) as unknown as number[]),
+      embed: async (texts) =>
+        texts.map(() => new Float32Array([1, 2, 3, 4]) as unknown as number[]),
       embedQuery: async () => new Float32Array([1, 2, 3, 4]) as unknown as number[],
     }
 
@@ -106,7 +109,9 @@ describe('reembedAll', () => {
 
     await reembedAll({ db: db as unknown as ReembedDb, provider })
 
-    const rows = db.prepare('SELECT embedding_model FROM chunks').all() as Array<{ embedding_model: string }>
+    const rows = db.prepare('SELECT embedding_model FROM chunks').all() as Array<{
+      embedding_model: string
+    }>
     expect(rows.every((r) => r.embedding_model === 'new-model')).toBe(true)
   })
 
@@ -167,6 +172,8 @@ describe('reembedAll', () => {
     await reembedAll({ db: db as unknown as ReembedDb, provider })
     recordEmbeddingModel(provider.model, createSqliteSettingsPort(db))
 
-    expect(createSqliteSettingsPort(db).get('embedding_model')).toBe('nvidia/nemotron-3-embed-1b:free')
+    expect(createSqliteSettingsPort(db).get('embedding_model')).toBe(
+      'nvidia/nemotron-3-embed-1b:free',
+    )
   })
 })
