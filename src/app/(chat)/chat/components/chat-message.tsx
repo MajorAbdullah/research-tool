@@ -1,5 +1,7 @@
 import { SearchX } from 'lucide-react'
 
+import { renderMarkdown } from './render-markdown'
+
 import { cn } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { CitationChips } from './citation-chips'
@@ -43,15 +45,18 @@ export function ChatMessage({ message }: ChatMessageProps) {
                 Nothing found in your library
               </div>
             )}
-            <p className="whitespace-pre-wrap">
-              {message.content}
+            {/* User text stays verbatim; only the model's answer is markdown-rendered, since
+                markdown is what the model emits and rendering it raw made correct answers look
+                broken. renderMarkdown returns React elements, never HTML. */}
+            <div className={isUser ? 'whitespace-pre-wrap' : undefined}>
+              {isUser ? message.content : renderMarkdown(message.content)}
               {message.streaming && (
                 <span
                   className="ml-0.5 inline-block h-3.5 w-1.5 translate-y-0.5 animate-pulse bg-current align-middle"
                   aria-hidden="true"
                 />
               )}
-            </p>
+            </div>
             {!message.streaming && message.grounded !== false && (
               <CitationChips sources={message.sources} />
             )}

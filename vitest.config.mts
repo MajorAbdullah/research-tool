@@ -4,7 +4,13 @@ import { fileURLToPath } from 'node:url'
 export default defineConfig({
   test: {
     environment: 'node',
-    include: ['src/**/*.test.ts', 'tests/unit/**/*.test.ts', 'tests/integration/**/*.test.ts'],
+    // NOTE the {ts,tsx}: the globs previously matched only .test.ts, so any component test
+    // would have been silently skipped rather than failing — it simply never ran.
+    include: [
+      'src/**/*.test.{ts,tsx}',
+      'tests/unit/**/*.test.{ts,tsx}',
+      'tests/integration/**/*.test.{ts,tsx}',
+    ],
     // e2e runs under Playwright, not Vitest
     exclude: ['**/node_modules/**', 'tests/e2e/**'],
     // Extractor tests run against recorded fixtures — the suite must stay offline and fast.
