@@ -111,12 +111,16 @@ for now), AI priority scoring, media archiving, iOS share sheet (Safari has no W
 
 ```bash
 git clone <your-fork> sieve && cd sieve
-cp .env.example .env        # then fill in OPENROUTER_API_KEY and GITHUB_PAT
-pnpm install
-pnpm db:migrate             # creates the SQLite file, FTS5 and vec0 tables
-pnpm seed:user              # creates your single user from SEED_USER_* in .env
-pnpm dev                    # http://localhost:3060
+make install-all            # env, deps, migrations, seed user, warm the embedding model
+$EDITOR .env                # set OPENROUTER_API_KEY
+make dev                    # http://localhost:3060
 ```
+
+`make` on its own lists every target. **[docs/COMMANDS.md](docs/COMMANDS.md) is the full command
+reference** — setup, daily use, inspecting data, evals, deploys and troubleshooting.
+
+Note that `pnpm install` compiles three native modules from source and takes a while the first
+time, and `make install-all` also downloads a ~128 MB embedding model. Both are one-time.
 
 ### Or with Docker
 

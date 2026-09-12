@@ -29,7 +29,8 @@
     "build:ext": "pnpm --filter sieve-extension build",
     "test:integration": "vitest run tests/integration",
     "test:unit": "vitest run tests/unit src",
-    "smoke:ai": "tsx --env-file=.env scripts/smoke-ai.ts"
+    "smoke:ai": "tsx --env-file=.env scripts/smoke-ai.ts",
+    "warm:model": "tsx --env-file=.env scripts/warm-model.ts"
   },
   "dependencies": {
     "next": "16.3.5",
