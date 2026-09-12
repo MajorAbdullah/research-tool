@@ -87,3 +87,46 @@ export class LlmTimeoutError extends Error {
     this.timeoutMs = timeoutMs
   }
 }
+
+/**
+ * A non-2xx response from OpenRouter's chat-completions endpoint. `status` is what `chain.ts`
+ * switches on to decide "try the next model in the chain" (429 rate-limited, 404 model
+ * deprecated/unknown, 503 upstream unavailable) versus a hard failure worth surfacing immediately.
+ */
+export class OpenRouterHttpError extends Error {
+  readonly status: number
+  readonly model: string
+
+  constructor(status: number, model: string, bodyText: string) {
+    super(`OpenRouter returned ${status} for model '${model}': ${bodyText.slice(0, 500)}`)
+    this.name = 'OpenRouterHttpError'
+    this.status = status
+    this.model = model
+  }
+}
+
+/**
+ * The model declined to answer (OpenRouter surfaces this as a non-null `message.refusal`,
+ * distinct from `message.content`). Verified live against `nvidia/nemotron-3-super-120b-a12b:free`
+ * — this is a model policy decision, not malformed output, so retrying the identical prompt
+ * against the *same* model won't fix it. `callStructured()` skips its one-shot repair retry for
+ * this case and lets the chain fall over to the next model instead of wasting a second call.
+ */
+export class ModelRefusalError extends Error {
+  readonly model: string
+  readonly refusal: string
+
+  constructor(model: string, refusal: string) {
+    super(`Model '${model}' refused: ${refusal}`)
+    this.name = 'ModelRefusalError'
+    this.model = model
+    this.refusal = refusal
+  }
+}
+
+/** The statuses that mean "this model isn't available right now, fail over to the next one in
+ *  the chain" — availability, not capacity (ADR 0004: rotation buys availability, never more
+ *  daily requests). A 429 here is OpenRouter telling us to slow down or that this model's own
+ *  sub-limit is hit, not necessarily that our whole daily budget is gone — that's the separate,
+ *  pre-checked `BudgetManager`. */
+export const RETRYABLE_HTTP_STATUSES: ReadonlySet<number> = new Set([429, 404, 503])
