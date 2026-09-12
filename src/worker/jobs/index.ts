@@ -13,4 +13,10 @@ export {
   MAX_RELATIONS_PER_ITEM,
 } from './relate'
 export { createIndexHandler, type IndexHandlerDeps } from './index-stage'
-export { runStage, isLastAttempt, currentAttempt, type RunStageOptions } from './shared'
+export {
+  runStage,
+  isLastAttempt,
+  currentAttempt,
+  withConcurrencyLimit,
+  type RunStageOptions,
+} from './shared'

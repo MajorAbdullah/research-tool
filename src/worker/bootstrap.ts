@@ -54,6 +54,7 @@ import {
   createEmbedHandler,
   createRelateHandler,
   createIndexHandler,
+  withConcurrencyLimit,
 } from './jobs'
 
 export interface PipelineDeps {
@@ -66,6 +67,12 @@ export interface PipelineDeps {
 /** Matched-pair logging (CLAUDE.md's Gen-AI section: "log resolved model + prompt version
  *  together") — bumped whenever prompts/enrichment.v1.md's contract changes. */
 const PROMPT_VERSION = 'enrichment.v1'
+
+/** Per-stage concurrency caps (plan P7.9) — see withConcurrencyLimit's own doc comment
+ *  (src/worker/jobs/shared.ts) for why these three and not the others. */
+const EXTRACT_CONCURRENCY = 2
+const ENRICH_CONCURRENCY = 1
+const EMBED_CONCURRENCY = 1
 
 function buildExtractors(): Extractor[] {
   return [
@@ -137,9 +144,18 @@ export async function bootstrapPipeline(): Promise<PipelineDeps> {
 
   registerJobHandlers({
     resolve: createResolveHandler({ db, jobQueue }),
-    extract: createExtractHandler({ db, jobQueue, extractors }),
-    enrich: createEnrichHandler({ db, jobQueue, provider: enrichProvider, embeddingProvider }),
-    embed: createEmbedHandler({ db, jobQueue, embeddingProvider }),
+    extract: withConcurrencyLimit(
+      EXTRACT_CONCURRENCY,
+      createExtractHandler({ db, jobQueue, extractors }),
+    ),
+    enrich: withConcurrencyLimit(
+      ENRICH_CONCURRENCY,
+      createEnrichHandler({ db, jobQueue, provider: enrichProvider, embeddingProvider }),
+    ),
+    embed: withConcurrencyLimit(
+      EMBED_CONCURRENCY,
+      createEmbedHandler({ db, jobQueue, embeddingProvider }),
+    ),
     relate: createRelateHandler({ db, jobQueue }),
     index: createIndexHandler({ db }),
   })

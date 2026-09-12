@@ -4,7 +4,8 @@ import * as schema from '@/db/schema'
 import { JobName } from '@/types/contracts'
 import { DEFAULT_MAX_ATTEMPTS } from '@/lib/queue'
 import { ExtractionError } from '@/lib/extractors'
-import { runStage, isLastAttempt, currentAttempt } from '@/worker/jobs/shared'
+import { runStage, isLastAttempt, currentAttempt, withConcurrencyLimit } from '@/worker/jobs/shared'
+import type { EmbedJobPayload } from '@/types/contracts'
 import { getItemById } from '@/repositories/items'
 import { makeTestDb, type TestDb } from '../../helpers/db'
 import { makeUser, makeItem } from '../../helpers/factories'
@@ -138,5 +139,47 @@ describe('runStage', () => {
     ).rejects.toThrow('some bug')
 
     expect(getItemById(db, itemId)?.status).toBe('processing')
+  })
+})
+
+describe('withConcurrencyLimit', () => {
+  it('never lets more than `limit` calls run at once (plan P7.9: extract 2 / enrich 1 / embed 1)', async () => {
+    let active = 0
+    let maxObserved = 0
+    const slowHandler = async (_payload: EmbedJobPayload) => {
+      active += 1
+      maxObserved = Math.max(maxObserved, active)
+      await new Promise((resolve) => setTimeout(resolve, 10))
+      active -= 1
+    }
+
+    const limited = withConcurrencyLimit(1, slowHandler)
+    await Promise.all([
+      limited({ name: JobName.Embed, itemId: 1 }),
+      limited({ name: JobName.Embed, itemId: 2 }),
+      limited({ name: JobName.Embed, itemId: 3 }),
+    ])
+
+    expect(maxObserved).toBe(1)
+  })
+
+  it('allows up to `limit` concurrent calls, not just one', async () => {
+    let active = 0
+    let maxObserved = 0
+    const slowHandler = async (_payload: EmbedJobPayload) => {
+      active += 1
+      maxObserved = Math.max(maxObserved, active)
+      await new Promise((resolve) => setTimeout(resolve, 10))
+      active -= 1
+    }
+
+    const limited = withConcurrencyLimit(2, slowHandler)
+    await Promise.all([
+      limited({ name: JobName.Embed, itemId: 1 }),
+      limited({ name: JobName.Embed, itemId: 2 }),
+      limited({ name: JobName.Embed, itemId: 3 }),
+    ])
+
+    expect(maxObserved).toBe(2)
   })
 })

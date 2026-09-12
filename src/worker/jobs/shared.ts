@@ -20,11 +20,14 @@
  */
 import type Database from 'better-sqlite3'
 import { JobName, ItemStatus } from '@/types/contracts'
+import type { JobPayload } from '@/types/contracts'
 import { ExtractionError } from '@/lib/extractors'
 import { DEFAULT_MAX_ATTEMPTS } from '@/lib/queue'
+import { Semaphore } from '@/lib/embeddings'
 import type { DbClient } from '@/db/client'
 import { markItemFailed, setItemStatus } from '@/repositories/items'
 import { logger } from '@/lib/logger'
+import type { JobHandler } from '../registry'
 
 interface ActiveAttemptRow {
   attempts: number
@@ -106,4 +109,27 @@ export async function runStage(options: RunStageOptions, fn: () => Promise<void>
 
     throw err instanceof Error ? err : new Error(messageOf(err))
   }
+}
+
+/**
+ * Per-stage concurrency caps (plan item P7.9: extract 2, enrich 1, embed 1 — "host load average
+ * stays < 4 during a 50-item burst"). `src/worker/loop.ts` already fixes the worker at 2 lanes
+ * total, so a raw job-name dispatch could otherwise let both lanes run the SAME stage at once —
+ * fine for `extract` (2 is the global cap anyway), but not for `enrich`/`embed`: one lane doing
+ * `enrich` while the other does `extract` for a different item is good parallelism, two lanes
+ * both doing `embed` at once is two concurrent ONNX inference calls this box doesn't want, even
+ * though the embedder's own internal semaphore (P3, `LocalEmbeddingProvider`) would still cap the
+ * raw `embed()`/`embedQuery()` calls beneath that at 2 either way — belt and suspenders, not a
+ * fix for a hole in P3's own guard.
+ *
+ * Reuses P3's `Semaphore` (src/lib/embeddings/concurrency.ts) rather than a second
+ * implementation — `bootstrap.ts` wraps each `createXHandler(...)` result with this before
+ * registering it, so the handlers themselves stay unaware of the policy (Open/Closed).
+ */
+export function withConcurrencyLimit<P extends JobPayload>(
+  limit: number,
+  handler: JobHandler<P>,
+): JobHandler<P> {
+  const semaphore = new Semaphore(limit)
+  return (payload: P) => semaphore.run(() => handler(payload))
 }
