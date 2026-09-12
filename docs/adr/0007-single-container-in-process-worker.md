@@ -31,7 +31,7 @@ the app responsive.
 
 ## Consequences
 
-- One container to deploy, monitor, restart, and fit inside the 512 MB `mem_limit` — only one more
+- One container to deploy, monitor, restart, and fit inside the 1 GB `mem_limit` — only one more
   container added to the ~45 already on the box, not two.
 - Simpler operational model: one process to log, one health check
   (`/api/v1/health` reporting `db`/`queue`/`disk`/`llm_quota` together), one restart path, one
@@ -44,7 +44,7 @@ the app responsive.
 
 ## What would reverse this
 
-- The **200-item burst load test (P14.2)** shows the container approaching or exceeding the 512 MB
+- The **200-item burst load test (P14.2)** shows the container approaching or exceeding the 1 GB
   `mem_limit`, or shows host load average climbing enough to put the other ~45 containers at risk —
   this is the documented trigger for flipping `WORKER_ENABLED=false` and running the worker as its
   own container.
