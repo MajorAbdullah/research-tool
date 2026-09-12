@@ -80,7 +80,9 @@ describe('enrichItem — happy path', () => {
       expect(outcome.result.tldr).toBe(validArticleData.tldr)
       expect(outcome.result.tags).toEqual(validArticleData.tags)
       expect(outcome.topic.isNew).toBe(true) // no existing topics to match against
-      expect(outcome.meta.promptVersion).toBe('v1')
+      // Tracks the version parsed from the loaded prompt filename (enrichment.v2.md -> 'v2').
+      // Bump this deliberately alongside a prompt version bump — see prompts/CHANGELOG.md.
+      expect(outcome.meta.promptVersion).toBe('v2')
       expect(outcome.meta.modelResolved).toBe('chain-model')
     }
   })
