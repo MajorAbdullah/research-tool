@@ -200,10 +200,24 @@ export interface EmbeddingProvider {
   readonly model: string
   readonly dimensions: number
   /**
+   * Embed DOCUMENTS (chunks) for storage.
+   *
    * Array-batched, deliberately — one call for N texts, not N calls, both for local throughput
    * and to keep the OpenRouter alternative cheap on quota.
    */
   embed(texts: string[]): Promise<number[][]>
+  /**
+   * Embed a SEARCH QUERY.
+   *
+   * Asymmetric from `embed` on purpose. BGE-family models are trained with an instruction prefix
+   * on the query side only ("Represent this sentence for searching relevant passages:"), which is
+   * why fastembed exposes `queryEmbed()` separately from `passageEmbed()`. Sending a query through
+   * the document path silently costs retrieval quality — the vectors are valid, just worse — so
+   * these are two methods rather than one with a boolean flag.
+   *
+   * An implementation backed by a symmetric model may delegate to `embed([text])`.
+   */
+  embedQuery(text: string): Promise<number[]>
 }
 
 // ---------------------------------------------------------------------------
