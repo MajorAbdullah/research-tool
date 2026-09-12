@@ -1,0 +1,9 @@
+{
+  "wireMagic": "pb3",
+  "events": [
+    { "tStartMs": 0, "dDurationMs": 2400, "segs": [{ "utf8": "Today we're going to build a local " }] },
+    { "tStartMs": 2400, "dDurationMs": 2600, "segs": [{ "utf8": "search index using SQLite's FTS5 " }] },
+    { "tStartMs": 5000, "dDurationMs": 3100, "segs": [{ "utf8": "extension, fused with a small vector " }] },
+    { "tStartMs": 8100, "dDurationMs": 2900, "segs": [{ "utf8": "table using reciprocal rank fusion." }] }
+  ]
+}

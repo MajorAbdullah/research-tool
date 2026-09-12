@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>The Free Tier Is a Constraint, Not a Discount — Practical Notes</title>
+  <meta property="og:title" content="The Free Tier Is a Constraint, Not a Discount" />
+  <meta property="og:description" content="Designing around 1,000 requests a day instead of pretending it is unlimited." />
+  <meta name="author" content="Dee Okafor" />
+</head>
+<body>
+  <div id="chrome"><a href="/archive">Archive</a> <a href="/about">About</a></div>
+  <main>
+    <article>
+      <h1>The Free Tier Is a Constraint, Not a Discount</h1>
+      <p>
+        Every project that builds against a free API tier eventually makes the same mistake: it
+        treats the quota as a discount on the paid tier rather than as a hard design constraint in
+        its own right. The two produce very different architectures.
+      </p>
+      <p>
+        A discount mindset says "call the model once per chunk, it is basically free, we will
+        upgrade later if it becomes a problem." A constraint mindset asks, before writing a line of
+        pipeline code, how many requests a single item can possibly cost, and treats any answer
+        above one or two as a bug to be batched away, not a scaling problem to be solved after
+        launch.
+      </p>
+      <p>
+        In practice this means one structured call per item that returns everything the downstream
+        pipeline needs in one shot — summary, tags, topic, and any kind-specific fields — instead
+        of a chain of five small calls that each do one thing tidily. It means relation labeling
+        happens in a batched sweep across many pending pairs, not one request per pair. And it
+        means the system has to stay useful when the quota is exhausted: search, capture, and
+        extraction all have to keep working on zero budget, with only the LLM-touched stages
+        pausing until the counter resets.
+      </p>
+      <p>
+        None of this is about being clever with the model. It is about refusing to let a shared,
+        finite resource be spent implicitly, one convenient little call at a time, until the day it
+        quietly runs out mid-afternoon and nobody can explain why.
+      </p>
+    </article>
+  </main>
+</body>
+</html>
