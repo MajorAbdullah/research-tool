@@ -8,12 +8,11 @@ const config: NextConfig = {
   // better-sqlite3: the datastore. onnxruntime-node/fastembed: local embeddings.
   serverExternalPackages: ['better-sqlite3', 'sqlite-vec', 'onnxruntime-node', 'fastembed'],
 
-  experimental: {
-    // The background worker loop is started from instrumentation.ts in this same process.
-    instrumentationHook: true,
-  },
+  // NOTE: no `experimental.instrumentationHook` — that flag was removed in Next 15.
+  // instrumentation.ts is stable and picked up automatically; adding the flag is a type error.
 
-  eslint: { ignoreDuringBuilds: false },
+  // Next 16 removed `eslint` from NextConfig — the built-in lint integration is gone.
+  // Linting runs via `pnpm lint` (eslint 10 + eslint-config-next) in CI instead.
   typescript: { ignoreBuildErrors: false },
 }
 

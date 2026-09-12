@@ -23,7 +23,7 @@ warning. A model file pinned in a volume cannot be retired out from under the de
 hosted API model can.
 
 Local embedding's cost is small and known: **`bge-small-en-v1.5`, 384 dimensions, ONNX-quantized**,
-via `fastembed`, at ~120 MB RAM. That pushes the container from ~250 MB to ~370 MB total — still
+via `fastembed`, at **~350 MB RAM (measured — see the correction below)**. That pushes the container to ~600 MB total — still
 comfortably under the 512 MB `mem_limit` and under 6% of the box's free RAM.
 
 ## Decision
@@ -48,7 +48,7 @@ comfortably under the 512 MB `mem_limit` and under 6% of the box's free RAM.
   ADR 0004) for enrichment instead of spending it on embeddings.
 - Immune to upstream embedding-model retirement corrupting the index — the worst case is a
   deliberate, versioned `pnpm reembed`, not silent corruption discovered later.
-- Permanently costs ~120 MB of RAM and some CPU during ingest, resident in the single container for
+- Permanently costs **~350 MB of RAM** (not the ~120 MB originally estimated) and some CPU during ingest, resident in the single container for
   the life of the deployment (see ADR 0007).
 - Gives up whatever marginal retrieval quality a larger hosted embedding model might offer, and gives
   up easy elasticity — changing embedding providers is a full `pnpm reembed` pass over every stored
@@ -58,6 +58,37 @@ comfortably under the 512 MB `mem_limit` and under 6% of the box's free RAM.
   free variants generally permit request retention for training, so private notes and chat queries
   still travel that path; this is flagged as an accepted, unresolved tradeoff of staying free-only,
   not something this decision fixes.
+
+## Measurement correction (2026-09-12)
+
+The original estimate of **~120 MB was wrong by roughly 3x.** Measured on the installed stack
+(`fastembed` 2.1.0 / `onnxruntime-node` 1.29.0, `bge-small-en-v1.5`, CPU provider):
+
+| Stage | RSS |
+|---|---|
+| node baseline | 38 MB |
+| after `require('fastembed')` | 69 MB |
+| **after model load** | **348 MB** |
+| under embedding load (120 chunks) | 400-509 MB, stable |
+
+Supporting facts:
+
+- `heapUsed` is only **7 MB** — so ~390 MB is native onnxruntime arena memory. **A forced GC reclaims
+  none of it.** This is not a JS leak and cannot be tuned away from the JS side.
+- It does **not** grow with work: 20 chunks and 120 chunks both settle at ~400 MB.
+- **Warm init from the on-disk cache is 0.25 s** (the first run's 481 s was the 128 MB model download).
+- Throughput ~87 ms/chunk on Apple Silicon.
+
+**The decision stands, but the container limit was corrected from `512m` to `1g`.** At 7.1 GB free on
+the host this is ~9% of available RAM, and still inside Karakeep's own 2 GB recommendation (ADR 0002),
+so the "good neighbour" constraint is not violated. The reasoning that actually drove this ADR — that
+API embeddings would make *every search query* cost free-tier quota, and that a retired remote model
+would invalidate every stored vector — is untouched by the RAM figure.
+
+**The lever if RAM ever does get tight:** because warm init is only 0.25 s, the embedder can move to a
+separate short-lived or long-lived child process, keeping the web process at ~200 MB. That was
+deliberately *not* done now: it adds IPC and lifecycle complexity to buy ~350 MB on a box with 7.1 GB
+free, which the repo's own KISS/YAGNI rule argues against.
 
 ## What would reverse this
 

@@ -1,0 +1,92 @@
+# =============================================================================
+# Sieve — base/dev compose file.
+#
+# `docker compose up -d` (README's "Or with Docker" quick start) uses this
+# file alone: it builds the image locally from ./Dockerfile. Production adds
+# compose.prod.yml on top (`-f compose.yml -f compose.prod.yml`), which swaps
+# the local build for a pre-built GHCR image — see deploy/deploy.sh.
+#
+# One service, by design: docs/adr/0007-single-container-in-process-worker.md.
+# =============================================================================
+
+name: sieve
+
+services:
+  sieve:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: sieve:local
+    container_name: sieve
+
+    # Single env file, in both dev and prod — see .env.example. There is no
+    # second environment (docs/adr/0009-no-iac-no-zero-downtime-deploys.md),
+    # so there is no .env.production/.env.staging split to keep in sync.
+    env_file:
+      - .env
+
+    environment:
+      # ONNX Runtime thread caps — docs/adr/0007-single-container-in-process-worker.md:
+      # "caps onnxruntime's intra-op threads at 2 of 6 vCPUs" so local
+      # embedding can never monopolize the host's shared 6 vCPUs.
+      #
+      # Contract with the embedding provider (src/lib/ai/**, owned by P3):
+      # read ONNX_INTRAOP_THREADS / ONNX_INTEROP_THREADS when constructing
+      # onnxruntime-node's SessionOptions (intraOpNumThreads /
+      # interOpNumThreads). These are NOT in .env.example (P0-owned) because
+      # they're infrastructure-side caps, not user-facing config — if P3's
+      # code ends up expecting different variable names, update the two
+      # lines below to match; nothing else in this file depends on the name.
+      # OMP_NUM_THREADS is set too, belt-and-suspenders, in case the
+      # resolved onnxruntime-node binary was built against OpenMP (in which
+      # case it honors this directly with no code change at all).
+      ONNX_INTRAOP_THREADS: "2"
+      ONNX_INTEROP_THREADS: "1"
+      OMP_NUM_THREADS: "2"
+
+    # Loopback-only, always. Never 0.0.0.0 — this box runs ~45 other
+    # containers and Sieve must not widen its own attack surface, in dev or
+    # prod. nginx (deploy/nginx/) is the only thing that talks to this port
+    # in production; in local dev, 127.0.0.1:3060 is exactly as reachable
+    # from the same machine as 0.0.0.0 would be, so there is no downside.
+    ports:
+      - "127.0.0.1:3060:3060"
+
+    volumes:
+      # SQLite (WAL mode: sieve.db + .db-wal + .db-shm) — the entire
+      # persistence layer. Bind-mounted so the database survives
+      # `compose down/up`, image rebuilds, and container replacement.
+      - ./data:/app/data
+      # Local embedding model cache (bge-small-en-v1.5, ONNX-quantized) —
+      # avoids re-downloading/re-warming the model on every container
+      # replacement. Matches the .gitignore'd `.fastembed_cache/` path.
+      - ./.fastembed_cache:/app/.fastembed_cache
+
+    # Good-neighbour hard cap: ~45 other containers already share this box's
+    # 11 GB RAM (7.1 GB available, 1.4 GB swap already in use — see
+    # docs/adr/0001-sqlite-over-postgres.md). memswap_limit equal to
+    # mem_limit means zero *additional* swap for this container specifically
+    # — it must not compete for the swap headroom the box is already short
+    # on.
+    mem_limit: 1g
+    memswap_limit: 512m
+
+    restart: unless-stopped
+
+    # GET /api/v1/health is the one unauthenticated route (docs/API.md
+    # §3.11), precisely so this can call it directly. Only `db` drives the
+    # HTTP status (200/503); disk/queue/llm_quota are informational and
+    # never flip it, so checking the status code alone is correct. No
+    # curl/wget in the image — Node makes the request itself.
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get({host:'127.0.0.1',port:process.env.PORT||3060,path:'/api/v1/health',timeout:4000},r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1)).on('timeout',()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
