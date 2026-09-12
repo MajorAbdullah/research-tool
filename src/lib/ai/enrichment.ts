@@ -68,7 +68,7 @@ export type EnrichOutcome =
 const DEFAULT_MAX_INPUT_TOKENS = 900_000
 
 function buildSystemPrompt(kind: ItemKind): { content: string; version: string } {
-  const base = loadPrompt('enrichment.v1.md')
+  const base = loadPrompt('enrichment.v2.md')
   if (kind !== ItemKindValues.Github) {
     return { content: base.content, version: base.version }
   }

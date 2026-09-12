@@ -65,8 +65,8 @@ export interface PipelineDeps {
 }
 
 /** Matched-pair logging (CLAUDE.md's Gen-AI section: "log resolved model + prompt version
- *  together") — bumped whenever prompts/enrichment.v1.md's contract changes. */
-const PROMPT_VERSION = 'enrichment.v1'
+ *  together") — bumped whenever prompts/enrichment.v*.md's contract changes. */
+const PROMPT_VERSION = 'enrichment.v2'
 
 /** Per-stage concurrency caps (plan P7.9) — see withConcurrencyLimit's own doc comment
  *  (src/worker/jobs/shared.ts) for why these three and not the others. */

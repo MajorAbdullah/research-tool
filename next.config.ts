@@ -8,6 +8,13 @@ const config: NextConfig = {
   // better-sqlite3: the datastore. onnxruntime-node/fastembed: local embeddings.
   serverExternalPackages: ['better-sqlite3', 'sqlite-vec', 'onnxruntime-node', 'fastembed'],
 
+  // Prompt files are read from disk at runtime (CLAUDE.md requires versioned prompt FILES, not
+  // inline strings). The bundler cannot see them, so trace them into the standalone output
+  // explicitly or every enrichment call fails in production with ENOENT.
+  outputFileTracingIncludes: {
+    '/**': ['./prompts/**/*.md'],
+  },
+
   // NOTE: no `experimental.instrumentationHook` — that flag was removed in Next 15.
   // instrumentation.ts is stable and picked up automatically; adding the flag is a type error.
 

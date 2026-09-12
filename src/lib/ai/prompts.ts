@@ -6,8 +6,7 @@
  * log rather than looking like the same "something changed" event.
  */
 
-import { readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
+import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 
 export interface LoadedPrompt {
@@ -17,9 +16,35 @@ export interface LoadedPrompt {
   content: string
 }
 
-// This file lives at src/lib/ai/prompts.ts; the repo root (and therefore prompts/) is three
-// directories up.
-const PROMPTS_DIR = fileURLToPath(new URL('../../../prompts/', import.meta.url))
+/**
+ * Resolved from process.cwd(), NOT from import.meta.url.
+ *
+ * `new URL('../../../prompts/', import.meta.url)` works under vitest and tsx — which is why 577
+ * tests passed with it — but breaks `next build`: the bundler cannot trace a runtime filesystem
+ * path relative to a module URL, and the emitted chunk no longer sits three directories below the
+ * repo root. next.config.ts's `outputFileTracingIncludes` copies prompts/** into the standalone
+ * output, where cwd is the standalone root, so cwd-relative resolution holds in dev, in tests and
+ * in production.
+ *
+ * Candidates are tried in order so a monorepo-style cwd or a standalone layout both work, and an
+ * unresolvable prompt names every path it tried instead of failing with a bare ENOENT.
+ */
+const PROMPT_DIR_CANDIDATES = [
+  path.join(process.cwd(), 'prompts'),
+  // standalone output nests the app under .next/standalone/
+  path.join(process.cwd(), '..', '..', 'prompts'),
+]
+
+function resolvePromptPath(filename: string): string {
+  for (const dir of PROMPT_DIR_CANDIDATES) {
+    const candidate = path.join(dir, filename)
+    if (existsSync(candidate)) return candidate
+  }
+  throw new Error(
+    `Prompt '${filename}' not found. Looked in: ${PROMPT_DIR_CANDIDATES.join(', ')}. ` +
+      `If this is a production build, check next.config.ts's outputFileTracingIncludes.`,
+  )
+}
 
 const VERSIONED_FILENAME = /\.v(\d+)\.[a-z0-9]+$/i
 
@@ -41,7 +66,7 @@ export function loadPrompt(filename: string): LoadedPrompt {
         `'enrichment.v1.md') — see CLAUDE.md's Gen-AI section.`,
     )
   }
-  const content = readFileSync(path.join(PROMPTS_DIR, filename), 'utf8').trim()
+  const content = readFileSync(resolvePromptPath(filename), 'utf8').trim()
   const loaded: LoadedPrompt = { version: `v${match[1]}`, content }
   cache.set(filename, loaded)
   return loaded
