@@ -33,21 +33,36 @@ describe('normalizeYear', () => {
 
 describe('detectDateOrder', () => {
   it('is certain DMY when the first component ever exceeds 12', () => {
-    expect(detectDateOrder([{ comp1: 5, comp2: 5 }, { comp1: 13, comp2: 9 }])).toEqual({
+    expect(
+      detectDateOrder([
+        { comp1: 5, comp2: 5 },
+        { comp1: 13, comp2: 9 },
+      ]),
+    ).toEqual({
       order: 'DMY',
       confidence: 'certain',
     })
   })
 
   it('is certain MDY when the second component ever exceeds 12', () => {
-    expect(detectDateOrder([{ comp1: 5, comp2: 5 }, { comp1: 9, comp2: 25 }])).toEqual({
+    expect(
+      detectDateOrder([
+        { comp1: 5, comp2: 5 },
+        { comp1: 9, comp2: 25 },
+      ]),
+    ).toEqual({
       order: 'MDY',
       confidence: 'certain',
     })
   })
 
   it('falls back to assumed DMY when every pair is ambiguous', () => {
-    expect(detectDateOrder([{ comp1: 1, comp2: 2 }, { comp1: 3, comp2: 4 }])).toEqual({
+    expect(
+      detectDateOrder([
+        { comp1: 1, comp2: 2 },
+        { comp1: 3, comp2: 4 },
+      ]),
+    ).toEqual({
       order: 'DMY',
       confidence: 'assumed',
     })

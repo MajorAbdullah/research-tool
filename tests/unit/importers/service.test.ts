@@ -29,7 +29,10 @@ class FakeBudgetSource implements BudgetSource {
     public resetsAt: number,
   ) {}
   getBackgroundBudget(): Promise<BackgroundBudgetStatus> {
-    return Promise.resolve({ remainingBackground: this.remainingBackground, resetsAt: this.resetsAt })
+    return Promise.resolve({
+      remainingBackground: this.remainingBackground,
+      resetsAt: this.resetsAt,
+    })
   }
 }
 
@@ -52,14 +55,16 @@ function makeChatText(n: number): string {
 
 const DAY_MS = 86_400_000
 
-function buildService(overrides: {
-  dailyBackgroundBudget?: number
-  budgetSource?: BudgetSource
-  clock?: Clock
-  maxBatchPerTick?: number
-  store?: InMemoryImportProgressStore
-  linkEnqueuer?: LinkEnqueuer
-} = {}) {
+function buildService(
+  overrides: {
+    dailyBackgroundBudget?: number
+    budgetSource?: BudgetSource
+    clock?: Clock
+    maxBatchPerTick?: number
+    store?: InMemoryImportProgressStore
+    linkEnqueuer?: LinkEnqueuer
+  } = {},
+) {
   const store = overrides.store ?? new InMemoryImportProgressStore()
   const linkEnqueuer = overrides.linkEnqueuer ?? new RecordingLinkEnqueuer()
   const budgetSource = overrides.budgetSource ?? new FakeBudgetSource(1000, Date.UTC(2026, 0, 2))
@@ -128,8 +133,12 @@ describe('WhatsAppImportService.applyAction', () => {
       filename: '_chat.txt',
       mode: 'dry_run',
     })
-    await expect(service.applyAction(view.id, 'pause')).rejects.toThrow(InvalidImportTransitionError)
-    await expect(service.applyAction(view.id, 'resume')).rejects.toThrow(InvalidImportTransitionError)
+    await expect(service.applyAction(view.id, 'pause')).rejects.toThrow(
+      InvalidImportTransitionError,
+    )
+    await expect(service.applyAction(view.id, 'resume')).rejects.toThrow(
+      InvalidImportTransitionError,
+    )
   })
 
   it('commit moves previewed -> running', async () => {
@@ -155,7 +164,9 @@ describe('WhatsAppImportService.applyAction', () => {
 
   it('throws ImportNotFoundError for an unknown id', async () => {
     const { service } = buildService()
-    await expect(service.applyAction('imp_doesnotexist', 'pause')).rejects.toThrow(ImportNotFoundError)
+    await expect(service.applyAction('imp_doesnotexist', 'pause')).rejects.toThrow(
+      ImportNotFoundError,
+    )
     await expect(service.getStatus('imp_doesnotexist')).rejects.toThrow(ImportNotFoundError)
     await expect(service.runBackfillTick('imp_doesnotexist')).rejects.toThrow(ImportNotFoundError)
   })
@@ -242,7 +253,7 @@ describe('WhatsAppImportService.runBackfillTick - throttling', () => {
     // budget of 1000/day was overridden to 2/day above and already spent - bump the
     // clock into the next UTC day so the per-day self-cap has fresh headroom, proving
     // resume continues the cursor rather than restarting it.
-    ;(service as unknown as { clock: FakeClock }) // no-op, keeps intent documented above
+    service as unknown as { clock: FakeClock } // no-op, keeps intent documented above
     const tick = await service.runBackfillTick(view.id)
     expect(tick.outcome).toBe('daily_cap_reached') // still same UTC day, cap already spent
     expect(linkEnqueuer.calls).toHaveLength(2)
@@ -255,7 +266,11 @@ describe('WhatsAppImportService.runBackfillTick - throttling', () => {
   it('auto-resumes at the UTC-midnight reset with no explicit resume action', async () => {
     const clock = new FakeClock(Date.UTC(2026, 0, 1, 23, 0, 0))
     const budgetSource = new FakeBudgetSource(1000, Date.UTC(2026, 0, 2))
-    const { service, linkEnqueuer } = buildService({ dailyBackgroundBudget: 2, clock, budgetSource })
+    const { service, linkEnqueuer } = buildService({
+      dailyBackgroundBudget: 2,
+      clock,
+      budgetSource,
+    })
     const view = await service.ingestUpload({
       fileBuffer: Buffer.from(makeChatText(5), 'utf-8'),
       filename: '_chat.txt',
@@ -302,7 +317,11 @@ describe('WhatsAppImportService.runBackfillTick - throttling', () => {
   it('survives a process restart: a new service instance over the same store resumes from the persisted cursor', async () => {
     const store = new InMemoryImportProgressStore()
     const enqueuerA = new RecordingLinkEnqueuer()
-    const { service: serviceA } = buildService({ dailyBackgroundBudget: 2, store, linkEnqueuer: enqueuerA })
+    const { service: serviceA } = buildService({
+      dailyBackgroundBudget: 2,
+      store,
+      linkEnqueuer: enqueuerA,
+    })
     const view = await serviceA.ingestUpload({
       fileBuffer: Buffer.from(makeChatText(6), 'utf-8'),
       filename: '_chat.txt',
@@ -311,7 +330,11 @@ describe('WhatsAppImportService.runBackfillTick - throttling', () => {
     await serviceA.runBackfillTick(view.id) // releases item-1, item-2 - "process" then restarts
 
     const enqueuerB = new RecordingLinkEnqueuer()
-    const { service: serviceB } = buildService({ dailyBackgroundBudget: 2, store, linkEnqueuer: enqueuerB })
+    const { service: serviceB } = buildService({
+      dailyBackgroundBudget: 2,
+      store,
+      linkEnqueuer: enqueuerB,
+    })
     // Same UTC day - a brand new instance still knows (via the store) that 2 were
     // already released today, so it correctly reports the cap reached rather than
     // releasing 2 more.

@@ -1,7 +1,12 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { isZipBuffer, listZipEntryNames, readZipEntry, ZipFormatError } from '../../../src/lib/importers/zip'
+import {
+  isZipBuffer,
+  listZipEntryNames,
+  readZipEntry,
+  ZipFormatError,
+} from '../../../src/lib/importers/zip'
 import { extractChatText } from '../../../src/lib/importers/source'
 
 const FIXTURES_DIR = fileURLToPath(new URL('../../fixtures/whatsapp/', import.meta.url))

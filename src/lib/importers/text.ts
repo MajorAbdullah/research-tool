@@ -29,16 +29,32 @@ const BYTE_ORDER_MARK = 0xfeff
 const NO_BREAK_SPACE = 0x00a0
 const NARROW_NO_BREAK_SPACE = 0x202f
 
+/** Inclusive code-point range, expanded below. */
+function range(start: number, end: number): number[] {
+  const out: number[] = []
+  for (let cp = start; cp <= end; cp++) out.push(cp)
+  return out
+}
+
+/**
+ * NOTE the ranges. The two bidi groups are CONTIGUOUS BLOCKS, not pairs of individual
+ * characters, and listing only their endpoints was a real bug: it let U+202B
+ * RIGHT-TO-LEFT EMBEDDING, U+202C POP DIRECTIONAL FORMATTING, U+202D/E the overrides,
+ * and U+2067/2068 the remaining isolates through untouched. Those are exactly the
+ * characters an Arabic- or Urdu-locale WhatsApp export is full of, so a line containing
+ * one would have failed to match the timestamp pattern and been silently skipped.
+ *
+ *   0x202A-0x202E  LRE, RLE, PDF, LRO, RLO
+ *   0x2066-0x2069  LRI, RLI, FSI, PDI
+ */
 const INVISIBLE_MARK_CODEPOINTS: readonly number[] = [
   ZERO_WIDTH_SPACE,
   ZERO_WIDTH_NON_JOINER,
   ZERO_WIDTH_JOINER,
   LEFT_TO_RIGHT_MARK,
   RIGHT_TO_LEFT_MARK,
-  BIDI_EMBEDDING_AND_OVERRIDE_START,
-  BIDI_EMBEDDING_AND_OVERRIDE_END,
-  BIDI_ISOLATE_START,
-  BIDI_ISOLATE_END,
+  ...range(BIDI_EMBEDDING_AND_OVERRIDE_START, BIDI_EMBEDDING_AND_OVERRIDE_END),
+  ...range(BIDI_ISOLATE_START, BIDI_ISOLATE_END),
   BYTE_ORDER_MARK,
 ]
 

@@ -49,7 +49,9 @@ describe('buildCandidates', () => {
 
   it('produces no candidates for a message with no URL', () => {
     const parsed = parseResult({
-      messages: [{ lineNumber: 1, timestampMs: 0, author: 'A', text: 'just chatting', isSystem: false }],
+      messages: [
+        { lineNumber: 1, timestampMs: 0, author: 'A', text: 'just chatting', isSystem: false },
+      ],
     })
     expect(buildCandidates(parsed)).toHaveLength(0)
   })
@@ -113,9 +115,33 @@ describe('countByKind / emptyKindCounts', () => {
 
   it('tallies candidates by kind', () => {
     const candidates: ImportLinkCandidate[] = [
-      { url: 'a', urlHash: '1', kind: 'github', createdAt: 0, note: '', author: null, sourceLineNumber: 1 },
-      { url: 'b', urlHash: '2', kind: 'github', createdAt: 0, note: '', author: null, sourceLineNumber: 2 },
-      { url: 'c', urlHash: '3', kind: 'video', createdAt: 0, note: '', author: null, sourceLineNumber: 3 },
+      {
+        url: 'a',
+        urlHash: '1',
+        kind: 'github',
+        createdAt: 0,
+        note: '',
+        author: null,
+        sourceLineNumber: 1,
+      },
+      {
+        url: 'b',
+        urlHash: '2',
+        kind: 'github',
+        createdAt: 0,
+        note: '',
+        author: null,
+        sourceLineNumber: 2,
+      },
+      {
+        url: 'c',
+        urlHash: '3',
+        kind: 'video',
+        createdAt: 0,
+        note: '',
+        author: null,
+        sourceLineNumber: 3,
+      },
     ]
     expect(countByKind(candidates)).toEqual({
       github: 2,

@@ -2,7 +2,11 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { parseWhatsAppChat } from '../../../src/lib/importers/chat-parser'
-import { buildCandidates, countByKind, dedupeCandidates } from '../../../src/lib/importers/candidates'
+import {
+  buildCandidates,
+  countByKind,
+  dedupeCandidates,
+} from '../../../src/lib/importers/candidates'
 
 const FIXTURES_DIR = fileURLToPath(new URL('../../fixtures/whatsapp/', import.meta.url))
 

@@ -54,7 +54,12 @@ describe('estimateEtaMs', () => {
   })
 
   it('is monotonically non-decreasing in the number of remaining items', () => {
-    const base = { now: 0, remainingBudgetToday: 50, dailyBackgroundBudget: 500, resetsAt: 3_600_000 }
+    const base = {
+      now: 0,
+      remainingBudgetToday: 50,
+      dailyBackgroundBudget: 500,
+      resetsAt: 3_600_000,
+    }
     const smaller = estimateEtaMs({ ...base, remainingItems: 40 })
     const larger = estimateEtaMs({ ...base, remainingItems: 4000 })
     expect(larger).toBeGreaterThan(smaller)

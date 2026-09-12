@@ -28,11 +28,9 @@ describe('extractUrls', () => {
   })
 
   it('trims a trailing comma, exclamation and question mark', () => {
-    expect(extractUrls('a https://example.com/1, b https://example.com/2! c https://example.com/3?')).toEqual([
-      'https://example.com/1',
-      'https://example.com/2',
-      'https://example.com/3',
-    ])
+    expect(
+      extractUrls('a https://example.com/1, b https://example.com/2! c https://example.com/3?'),
+    ).toEqual(['https://example.com/1', 'https://example.com/2', 'https://example.com/3'])
   })
 
   it('trims an unbalanced trailing closing parenthesis from prose wrapping', () => {
