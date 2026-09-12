@@ -1,0 +1,41 @@
+# =============================================================================
+# Sieve — production override.
+#
+#   docker compose -f compose.yml -f compose.prod.yml up -d
+#
+# The only real job of this file: stop building locally and run the exact
+# image GitHub Actions built and pushed to GHCR (build once, promote the
+# same artifact — see .github/workflows/deploy.yml and CLAUDE.md's DevOps
+# section). Everything else (mem_limit, restart policy, healthcheck,
+# loopback-only port, bind-mounted ./data) already applies from compose.yml
+# and is intentionally not duplicated here — restated below only where the
+# plan calls it out explicitly, so this file is still legible standing alone
+# in review.
+#
+# deploy/deploy.sh is what actually invokes this — see deploy/README.md.
+# =============================================================================
+
+services:
+  sieve:
+    # Remove the inherited `build:` entirely. If both `build` and `image`
+    # are present, `docker compose up` builds locally and just tags the
+    # result — it does NOT pull. Resetting `build` is what forces a real
+    # pull of the pre-built artifact.
+    build: !reset null
+
+    # Set by deploy/deploy.sh before invoking compose, e.g.:
+    #   ghcr.io/<owner>/<repo>:<git-sha>
+    # The `:?` form fails loudly with this message if it's unset, instead
+    # of silently falling back to a tag that doesn't exist — see
+    # deploy/README.md for exactly how/when this gets exported.
+    image: ${SIEVE_IMAGE:?SIEVE_IMAGE must be set to a full ghcr.io image ref, e.g. ghcr.io/OWNER/sieve:latest — see deploy/README.md}
+
+    # Always check the registry for this tag rather than trusting whatever
+    # image happens to already be cached locally under the same name.
+    pull_policy: always
+
+    # Restated for anyone auditing "what does prod actually run with"
+    # without needing to cross-reference compose.yml.
+    mem_limit: 1g
+    memswap_limit: 512m
+    restart: unless-stopped
