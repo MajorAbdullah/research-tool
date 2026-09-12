@@ -28,7 +28,7 @@ export function createIndexHandler(deps: IndexHandlerDeps): JobHandler<IndexJobP
     }
 
     await runStage({ db: deps.db, stage: JobName.Index, itemId: item.id }, async () => {
-      assertFtsInSync(deps.db, item.id)
+      assertFtsInSync(deps.db)
       setItemStatus(deps.db, item.id, ItemStatus.Inbox)
     })
   }

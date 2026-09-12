@@ -149,25 +149,31 @@ export function requeueItemForRetry(db: DbClient, id: number): void {
     .run()
 }
 
-interface FtsRowidRow {
-  rowid: number
-}
-
 /**
  * Defensive check (P7.6, `index` stage) that `items_fts` — a trigger-maintained external-content
- * index, not a Drizzle-declared table (see src/db/schema.ts's header) — actually has a row for
- * this item. FTS5 sync itself is 100% trigger-driven (drizzle/0000_init.sql); this never fixes
+ * index, not a Drizzle-declared table (see src/db/schema.ts's header) — is actually in sync with
+ * `items`. FTS5 sync itself is 100% trigger-driven (drizzle/0000_init.sql); this never fixes
  * anything, it only turns a broken trigger chain into a loud, caught-immediately error instead of
- * an item that silently never turns up in search. Drops to the raw connection (`db.$client`)
- * because `items_fts` has no Drizzle schema entry to query through.
+ * an item that silently never turns up in search.
+ *
+ * VERIFIED EMPIRICALLY (this was not the first implementation): a plain `SELECT rowid FROM
+ * items_fts WHERE rowid = ?` is NOT a real check here. For an external-content table, SQLite
+ * resolves a non-`MATCH` query straight through to the content table/view (`items_fts_source`) —
+ * it returns a row for any `itemId` that exists in `items`, even with the sync trigger dropped
+ * entirely and the tokenized index never touched. The only query that actually inspects the
+ * tokenized index against its content is FTS5's own `integrity-check` command, and specifically
+ * the `rank`-argument form that also cross-checks the content table — the plain
+ * `('integrity-check')` form (no `rank`) passed just as quietly in the same broken-trigger test.
+ * Table-wide rather than per-item (FTS5's command has no per-rowid scope), which is a feature at
+ * this scale: every item finishing the pipeline re-verifies the whole index, cheaply.
  */
-export function assertFtsInSync(db: DbClient, itemId: number): void {
-  const row = db.$client
-    .prepare<[number], FtsRowidRow>('select rowid from items_fts where rowid = ?')
-    .get(itemId)
-  if (!row) {
+export function assertFtsInSync(db: DbClient): void {
+  try {
+    db.$client.exec(`insert into items_fts(items_fts, rank) values ('integrity-check', 1)`)
+  } catch (err) {
     throw new Error(
-      `assertFtsInSync: items_fts has no row for item ${itemId} — the FTS5 sync trigger chain is broken`,
+      `assertFtsInSync: items_fts failed its integrity-check against items — the FTS5 sync ` +
+        `trigger chain is broken (${err instanceof Error ? err.message : String(err)})`,
     )
   }
 }
