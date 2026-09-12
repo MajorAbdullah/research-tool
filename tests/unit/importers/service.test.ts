@@ -62,7 +62,9 @@ function buildService(
     clock?: Clock
     maxBatchPerTick?: number
     store?: InMemoryImportProgressStore
-    linkEnqueuer?: LinkEnqueuer
+    // Typed as the concrete recorder, not the LinkEnqueuer interface: `??` would otherwise
+    // widen the union and hide `.calls`, which every assertion below reads.
+    linkEnqueuer?: RecordingLinkEnqueuer
   } = {},
 ) {
   const store = overrides.store ?? new InMemoryImportProgressStore()
