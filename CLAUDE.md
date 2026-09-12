@@ -97,6 +97,17 @@ These appear in every domain doc. Internalize them once; apply them to code, inf
 - **The LLM can never set `status`.** An item cannot mark itself tested. Enforced in the Zod layer, not the prompt.
 - **Access control filters *before* the kNN**, never by discarding results after.
 - **API routes are versioned from the first endpoint** — `/api/v1/...`.
+- **`chunk_vec` rowids must be bound as `BigInt`, not `number`.** `sqlite-vec` rejects a plain JS
+  number with *"Only integers are allows for primary key values"* — verified against
+  better-sqlite3 13.0.3 / sqlite-vec 0.1.9. Write `.run(BigInt(chunk.id), embedding)`.
+- **The `items_fts` delete trigger must stay `BEFORE DELETE`.** SQLite processes `ON DELETE CASCADE`
+  to `item_tags` *between* a row's BEFORE and AFTER triggers, so an `AFTER DELETE` version reads an
+  already-empty tag set and leaves a **stale FTS row that still matches searches for a deleted item**.
+  This was reproduced, fixed, and has a regression test. Do not "simplify" it back.
+- **`items_fts` is an external-content table over the `items_fts_source` VIEW**, not over `items`
+  directly — FTS5 matches content columns *by name*, and `tldr`/`tags`/`content` don't exist on
+  `items`. The view aliases them and synthesizes `tags` via `group_concat`. Changing this silently
+  breaks search.
 
 ---
 
