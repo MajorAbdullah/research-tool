@@ -7,11 +7,13 @@ import type { ExtractionTier } from '@/components/common/types'
 const TIER_COPY: Record<Exclude<ExtractionTier, 'full'>, { label: string; detail: string }> = {
   partial: {
     label: 'Partial extraction',
-    detail: 'Some content came through, but not the full source — re-opening with the extension can fill in the rest.',
+    detail:
+      'Some content came through, but not the full source — re-opening with the extension can fill in the rest.',
   },
   metadata_only: {
     label: 'Metadata only',
-    detail: 'Only the title and thumbnail were captured. Open the original with the browser extension to enrich it.',
+    detail:
+      'Only the title and thumbnail were captured. Open the original with the browser extension to enrich it.',
   },
 }
 
@@ -31,7 +33,12 @@ export interface ExtractionTierWarningProps {
  * is shown, this component (or its absence) is the tell for whether what
  * you're looking at is the whole story.
  */
-export function ExtractionTierWarning({ tier, variant = 'compact', action, className }: ExtractionTierWarningProps) {
+export function ExtractionTierWarning({
+  tier,
+  variant = 'compact',
+  action,
+  className,
+}: ExtractionTierWarningProps) {
   if (tier === 'full') return null
   const { label, detail } = TIER_COPY[tier]
 
@@ -40,7 +47,7 @@ export function ExtractionTierWarning({ tier, variant = 'compact', action, class
       <span
         className={cn(
           'inline-flex w-fit items-center gap-1 rounded-md bg-warning/15 px-2 py-0.5 text-xs font-medium text-warning',
-          className
+          className,
         )}
         title={detail}
       >
@@ -55,7 +62,7 @@ export function ExtractionTierWarning({ tier, variant = 'compact', action, class
       role="status"
       className={cn(
         'flex items-start gap-3 rounded-lg border border-warning/30 bg-warning/10 p-4 text-warning',
-        className
+        className,
       )}
     >
       <TriangleAlert className="mt-0.5 size-5 shrink-0" aria-hidden="true" />

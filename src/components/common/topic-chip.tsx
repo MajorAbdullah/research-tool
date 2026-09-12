@@ -23,10 +23,16 @@ export function TopicChip({ label, color, className }: TopicChipProps) {
     <span
       className={cn(
         'inline-flex w-fit items-center gap-1.5 rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground',
-        className
+        className,
       )}
     >
-      {color && <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />}
+      {color && (
+        <span
+          aria-hidden="true"
+          className="size-1.5 shrink-0 rounded-full"
+          style={{ backgroundColor: color }}
+        />
+      )}
       {label}
     </span>
   )

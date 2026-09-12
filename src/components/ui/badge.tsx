@@ -28,7 +28,7 @@ export const badgeVariants = cva(
     defaultVariants: {
       variant: 'default',
     },
-  }
+  },
 )
 
 type BadgeVariantProps = VariantPropsOf<typeof badgeVariants>

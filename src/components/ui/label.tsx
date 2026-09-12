@@ -16,7 +16,7 @@ export function Label({ className, ...props }: LabelHTMLAttributes<HTMLLabelElem
       className={cn(
         'text-sm leading-none font-medium text-foreground',
         'peer-disabled:cursor-not-allowed peer-disabled:opacity-50',
-        className
+        className,
       )}
       {...props}
     />

@@ -25,7 +25,9 @@ export interface TooltipProps {
 export function Tooltip({ children, label, id, side = 'top', className }: TooltipProps) {
   const [open, setOpen] = useState(false)
 
-  const trigger = isValidElement(children) ? cloneElement(children, { 'aria-describedby': id }) : children
+  const trigger = isValidElement(children)
+    ? cloneElement(children, { 'aria-describedby': id })
+    : children
 
   return (
     <span
@@ -44,7 +46,7 @@ export function Tooltip({ children, label, id, side = 'top', className }: Toolti
           'opacity-0 transition-opacity duration-150',
           side === 'top' ? 'bottom-full mb-2' : 'top-full mt-2',
           open && 'opacity-100',
-          className
+          className,
         )}
       >
         {label}

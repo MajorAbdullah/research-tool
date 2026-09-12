@@ -65,7 +65,10 @@ async function run(): Promise<ContentCaptureResult> {
   return { title, html: captureOuterHtml() }
 }
 
-function sendResult(message: { type: 'sieve:content-capture-result'; result: ContentCaptureResult }): void {
+function sendResult(message: {
+  type: 'sieve:content-capture-result'
+  result: ContentCaptureResult
+}): void {
   void chrome.runtime.sendMessage(message)
 }
 
@@ -76,5 +79,7 @@ function sendError(error: string): void {
 run()
   .then((result) => sendResult({ type: 'sieve:content-capture-result', result }))
   .catch((err: unknown) => {
-    sendError(err instanceof Error ? err.message : 'Capture failed on the page for an unknown reason.')
+    sendError(
+      err instanceof Error ? err.message : 'Capture failed on the page for an unknown reason.',
+    )
   })

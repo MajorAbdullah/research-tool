@@ -16,7 +16,10 @@ export function SidebarNav() {
   const pathname = usePathname()
 
   return (
-    <nav aria-label="Primary" className="flex w-56 shrink-0 flex-col gap-1 border-r border-border p-3">
+    <nav
+      aria-label="Primary"
+      className="flex w-56 shrink-0 flex-col gap-1 border-r border-border p-3"
+    >
       <div className="px-2 py-3 text-lg font-semibold text-foreground">Sieve</div>
       {NAV_ITEMS.map((item) => {
         const active = pathname === item.href || pathname?.startsWith(`${item.href}/`)
@@ -31,7 +34,7 @@ export function SidebarNav() {
               'focus-visible:ring-2 focus-visible:ring-ring',
               active
                 ? 'bg-secondary font-semibold text-secondary-foreground'
-                : 'font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                : 'font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground',
             )}
           >
             <Icon className="size-5" aria-hidden="true" />

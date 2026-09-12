@@ -16,7 +16,7 @@ export type CheckboxProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'type' |
  */
 export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Checkbox(
   { className, ...props },
-  ref
+  ref,
 ) {
   return (
     // Both the visual box and the checkmark must be direct siblings of the
@@ -32,7 +32,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
         className={cn(
           'peer absolute inset-0 size-full cursor-pointer appearance-none rounded-md',
           'disabled:cursor-not-allowed',
-          className
+          className,
         )}
         {...props}
       />
@@ -42,7 +42,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
           'pointer-events-none absolute inset-0 m-auto size-5 rounded-[0.3rem] border border-input bg-transparent',
           'peer-checked:border-primary peer-checked:bg-primary',
           'peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background',
-          'peer-disabled:opacity-50'
+          'peer-disabled:opacity-50',
         )}
       />
       <Check

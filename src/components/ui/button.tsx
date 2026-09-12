@@ -37,7 +37,7 @@ export const buttonVariants = cva(
       variant: 'default',
       size: 'default',
     },
-  }
+  },
 )
 
 type ButtonVariantProps = VariantPropsOf<typeof buttonVariants>
@@ -49,7 +49,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>, Bu
 // clone their child and attach a ref to it.
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   { className, variant, size, type = 'button', ...props },
-  ref
+  ref,
 ) {
   return (
     <button

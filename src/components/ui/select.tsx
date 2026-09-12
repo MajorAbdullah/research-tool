@@ -14,7 +14,7 @@ export type SelectProps = SelectHTMLAttributes<HTMLSelectElement>
  */
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
   { className, children, ...props },
-  ref
+  ref,
 ) {
   return (
     <div className="relative">
@@ -25,7 +25,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
           'outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
           'disabled:cursor-not-allowed disabled:opacity-50',
           'aria-invalid:border-destructive aria-invalid:ring-destructive/40',
-          className
+          className,
         )}
         {...props}
       >

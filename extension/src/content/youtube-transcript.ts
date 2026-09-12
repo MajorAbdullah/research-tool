@@ -13,10 +13,7 @@
 import { assembleTranscript, getSegmentElements } from './youtube-transcript-assemble'
 
 export type YouTubeTranscriptFailureReason =
-  | 'no_transcript_button'
-  | 'panel_did_not_open'
-  | 'empty_after_open'
-  | 'navigated_away'
+  'no_transcript_button' | 'panel_did_not_open' | 'empty_after_open' | 'navigated_away'
 
 export interface YouTubeTranscriptResult {
   transcript: string | null

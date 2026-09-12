@@ -48,7 +48,10 @@ async function init(): Promise<void> {
 
   const settings = await getSettings()
   if (!settings.serverUrl || !settings.token) {
-    setStatus('info', 'Sieve is not configured yet — open Options to set your server URL and token.')
+    setStatus(
+      'info',
+      'Sieve is not configured yet — open Options to set your server URL and token.',
+    )
     saveButtonEl.disabled = true
   }
 }
@@ -70,8 +73,13 @@ formEl.addEventListener('submit', (event) => {
       })) as PopupSaveReply
 
       if (reply.ok) {
-        const suffix = reply.truncated ? ' (content was truncated to fit the 1 MB capture limit)' : ''
-        setStatus('success', reply.duplicate ? `Already in Sieve — refreshed.${suffix}` : `Saved to Sieve.${suffix}`)
+        const suffix = reply.truncated
+          ? ' (content was truncated to fit the 1 MB capture limit)'
+          : ''
+        setStatus(
+          'success',
+          reply.duplicate ? `Already in Sieve — refreshed.${suffix}` : `Saved to Sieve.${suffix}`,
+        )
       } else {
         setStatus('error', reply.message)
       }

@@ -28,13 +28,15 @@ function ToastRow({ toast, onDismiss }: { toast: ToastData; onDismiss: (id: stri
       role="status"
       className={cn(
         'pointer-events-auto flex w-full items-start gap-3 rounded-lg border p-4 shadow-lg sm:w-96',
-        variantClass[variant]
+        variantClass[variant],
       )}
     >
       {Icon && <Icon className="mt-0.5 size-5 shrink-0" aria-hidden="true" />}
       <div className="min-w-0 flex-1">
         {toast.title && <p className="text-sm font-medium">{toast.title}</p>}
-        {toast.description && <p className="mt-0.5 text-sm text-muted-foreground">{toast.description}</p>}
+        {toast.description && (
+          <p className="mt-0.5 text-sm text-muted-foreground">{toast.description}</p>
+        )}
       </div>
       <button
         type="button"
@@ -42,7 +44,7 @@ function ToastRow({ toast, onDismiss }: { toast: ToastData; onDismiss: (id: stri
         aria-label="Dismiss notification"
         className={cn(
           '-m-2.5 inline-flex size-touch shrink-0 items-center justify-center rounded-md text-muted-foreground',
-          'outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring'
+          'outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring',
         )}
       >
         <X className="size-4" />

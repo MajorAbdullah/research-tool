@@ -32,7 +32,8 @@ export async function ensureServerOriginPermission(
     if (granted) return { granted: true }
     return {
       granted: false,
-      message: 'Sieve needs permission to contact your server. Try again and allow access when prompted.',
+      message:
+        'Sieve needs permission to contact your server. Try again and allow access when prompted.',
     }
   } catch (err) {
     return {

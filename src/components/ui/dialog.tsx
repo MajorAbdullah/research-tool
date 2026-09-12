@@ -78,7 +78,12 @@ export interface DialogContentProps extends HTMLAttributes<HTMLDialogElement> {
   hideCloseButton?: boolean
 }
 
-export function DialogContent({ className, children, hideCloseButton, ...props }: DialogContentProps) {
+export function DialogContent({
+  className,
+  children,
+  hideCloseButton,
+  ...props
+}: DialogContentProps) {
   const { open, setOpen, titleId, descriptionId } = useDialogContext('DialogContent')
   const ref = useDialogElement(open, setOpen)
 
@@ -95,7 +100,7 @@ export function DialogContent({ className, children, hideCloseButton, ...props }
         // default rather than a second "moment."
         'm-auto w-[calc(100%-2rem)] max-w-lg rounded-lg border border-border bg-card p-6 text-card-foreground shadow-lg',
         'backdrop:bg-black/50',
-        className
+        className,
       )}
       {...props}
     >
@@ -107,7 +112,7 @@ export function DialogContent({ className, children, hideCloseButton, ...props }
           aria-label="Close dialog"
           className={cn(
             'absolute top-3 right-3 inline-flex size-touch items-center justify-center rounded-md text-muted-foreground',
-            'outline-none hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring'
+            'outline-none hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring',
           )}
         >
           <X className="size-4" />
@@ -123,14 +128,27 @@ export function DialogHeader({ className, ...props }: HTMLAttributes<HTMLDivElem
 
 export function DialogTitle({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) {
   const { titleId } = useDialogContext('DialogTitle')
-  return <h2 id={titleId} className={cn('text-lg font-semibold text-foreground', className)} {...props} />
+  return (
+    <h2
+      id={titleId}
+      className={cn('text-lg font-semibold text-foreground', className)}
+      {...props}
+    />
+  )
 }
 
 export function DialogDescription({ className, ...props }: HTMLAttributes<HTMLParagraphElement>) {
   const { descriptionId } = useDialogContext('DialogDescription')
-  return <p id={descriptionId} className={cn('text-sm text-muted-foreground', className)} {...props} />
+  return (
+    <p id={descriptionId} className={cn('text-sm text-muted-foreground', className)} {...props} />
+  )
 }
 
 export function DialogFooter({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end', className)} {...props} />
+  return (
+    <div
+      className={cn('mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end', className)}
+      {...props}
+    />
+  )
 }

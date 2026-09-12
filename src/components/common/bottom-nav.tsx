@@ -37,7 +37,7 @@ export function BottomNav() {
               // focus ring isn't clipped by the viewport edge on the
               // outermost items.
               'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
-              active ? 'font-semibold text-primary' : 'font-medium text-muted-foreground'
+              active ? 'font-semibold text-primary' : 'font-medium text-muted-foreground',
             )}
           >
             <Icon className="size-5" aria-hidden="true" />

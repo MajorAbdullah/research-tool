@@ -40,9 +40,9 @@ services:
       # OMP_NUM_THREADS is set too, belt-and-suspenders, in case the
       # resolved onnxruntime-node binary was built against OpenMP (in which
       # case it honors this directly with no code change at all).
-      ONNX_INTRAOP_THREADS: "2"
-      ONNX_INTEROP_THREADS: "1"
-      OMP_NUM_THREADS: "2"
+      ONNX_INTRAOP_THREADS: '2'
+      ONNX_INTEROP_THREADS: '1'
+      OMP_NUM_THREADS: '2'
 
     # Loopback-only, always. Never 0.0.0.0 — this box runs ~45 other
     # containers and Sieve must not widen its own attack surface, in dev or
@@ -50,7 +50,7 @@ services:
     # in production; in local dev, 127.0.0.1:3060 is exactly as reachable
     # from the same machine as 0.0.0.0 would be, so there is no downside.
     ports:
-      - "127.0.0.1:3060:3060"
+      - '127.0.0.1:3060:3060'
 
     volumes:
       # SQLite (WAL mode: sieve.db + .db-wal + .db-shm) — the entire
@@ -81,9 +81,9 @@ services:
     healthcheck:
       test:
         [
-          "CMD",
-          "node",
-          "-e",
+          'CMD',
+          'node',
+          '-e',
           "require('http').get({host:'127.0.0.1',port:process.env.PORT||3060,path:'/api/v1/health',timeout:4000},r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1)).on('timeout',()=>process.exit(1))",
         ]
       interval: 30s

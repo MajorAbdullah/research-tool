@@ -58,7 +58,12 @@ export const FIXTURE_ITEMS: ItemSummary[] = [
     source_surface: 'extension',
     summary_tldr:
       'Walks through LoRA fine-tuning a video diffusion checkpoint on a custom motion dataset, with a comparison against full fine-tuning.',
-    topic: { slug: 'diffusion-models', label: 'Diffusion Models', color: '#0ea5e9', confidence: 0.86 },
+    topic: {
+      slug: 'diffusion-models',
+      label: 'Diffusion Models',
+      color: '#0ea5e9',
+      confidence: 0.86,
+    },
     tags: ['diffusion', 'fine-tuning'],
     starred: false,
     board_rank: 2,
@@ -98,7 +103,8 @@ export const FIXTURE_ITEMS: ItemSummary[] = [
     thumbnail_url: null,
     extraction_tier: 'full',
     source_surface: 'extension',
-    summary_tldr: 'An 8-post thread arguing structured tool-calling beats prompt-and-repair for schema reliability, with benchmarks across six models.',
+    summary_tldr:
+      'An 8-post thread arguing structured tool-calling beats prompt-and-repair for schema reliability, with benchmarks across six models.',
     topic: { slug: 'llm-tooling', label: 'LLM Tooling', color: '#f97316', confidence: 0.78 },
     tags: ['structured-output'],
     starred: false,
@@ -138,7 +144,8 @@ export const FIXTURE_ITEMS: ItemSummary[] = [
     thumbnail_url: null,
     extraction_tier: 'full',
     source_surface: 'web',
-    summary_tldr: 'Covers the current crop of open-weight reasoning models, their eval gaps versus closed frontier models, and inference cost tradeoffs.',
+    summary_tldr:
+      'Covers the current crop of open-weight reasoning models, their eval gaps versus closed frontier models, and inference cost tradeoffs.',
     topic: { slug: 'open-models', label: 'Open Models', color: '#a855f7', confidence: 0.82 },
     tags: ['podcast', 'reasoning'],
     starred: false,

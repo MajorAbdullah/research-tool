@@ -34,7 +34,14 @@ export interface TabsProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 /** Root. Uncontrolled by default (`defaultValue`); pass `value`+`onValueChange` to control it. */
-export function Tabs({ defaultValue, value, onValueChange, className, children, ...props }: TabsProps) {
+export function Tabs({
+  defaultValue,
+  value,
+  onValueChange,
+  className,
+  children,
+  ...props
+}: TabsProps) {
   const [internalValue, setInternalValue] = useState(defaultValue)
   const idBase = useId()
   const current = value ?? internalValue
@@ -59,7 +66,7 @@ export function TabsList({ className, ...props }: HTMLAttributes<HTMLDivElement>
       role="tablist"
       className={cn(
         'inline-flex items-center gap-1 rounded-md bg-muted p-1 text-muted-foreground',
-        className
+        className,
       )}
       {...props}
     />
@@ -118,7 +125,7 @@ export function TabsTrigger({ value, className, onKeyDown, ...props }: TabsTrigg
         'outline-none focus-visible:ring-2 focus-visible:ring-ring',
         'disabled:pointer-events-none disabled:opacity-50',
         selected ? 'bg-background text-foreground shadow-sm' : 'hover:text-foreground',
-        className
+        className,
       )}
       {...props}
     />

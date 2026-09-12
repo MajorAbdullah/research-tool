@@ -11,7 +11,7 @@ export type InputProps = InputHTMLAttributes<HTMLInputElement>
  */
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   { className, ...props },
-  ref
+  ref,
 ) {
   return (
     <input
@@ -22,7 +22,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         'outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
         'disabled:cursor-not-allowed disabled:opacity-50',
         'aria-invalid:border-destructive aria-invalid:ring-destructive/40',
-        className
+        className,
       )}
       {...props}
     />

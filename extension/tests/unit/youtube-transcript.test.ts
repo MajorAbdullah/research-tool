@@ -31,7 +31,7 @@ describe('assembleTranscript — modern YouTube layout (transcript-segment-view-
   it('assembles the full transcript in "[timestamp] text" lines, in document order', () => {
     expect(assembleTranscript(doc)).toBe(
       [
-        "[0:01] [♪♪♪]",
+        '[0:01] [♪♪♪]',
         "[0:18] ♪ We're no strangers to love ♪ ♪ You know the rules and so do I ♪",
         '[3:23] ♪ Never gonna make you cry ♪ ♪ Never gonna say goodbye ♪',
       ].join('\n'),

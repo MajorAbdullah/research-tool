@@ -91,7 +91,12 @@ export interface DropdownMenuContentProps extends HTMLAttributes<HTMLDivElement>
   align?: 'start' | 'end'
 }
 
-export function DropdownMenuContent({ className, align = 'end', children, ...props }: DropdownMenuContentProps) {
+export function DropdownMenuContent({
+  className,
+  align = 'end',
+  children,
+  ...props
+}: DropdownMenuContentProps) {
   const { open, setOpen, triggerRef } = useDropdownMenuContext('DropdownMenuContent')
   const contentRef = useRef<HTMLDivElement>(null)
 
@@ -111,7 +116,9 @@ export function DropdownMenuContent({ className, align = 'end', children, ...pro
     document.addEventListener('pointerdown', handlePointerDown)
     document.addEventListener('keydown', handleKeyDown)
 
-    const firstItem = contentRef.current?.querySelector<HTMLElement>('[role="menuitem"]:not([disabled])')
+    const firstItem = contentRef.current?.querySelector<HTMLElement>(
+      '[role="menuitem"]:not([disabled])',
+    )
     firstItem?.focus()
 
     return () => {
@@ -122,7 +129,7 @@ export function DropdownMenuContent({ className, align = 'end', children, ...pro
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const items = Array.from(
-      contentRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]:not([disabled])') ?? []
+      contentRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]:not([disabled])') ?? [],
     )
     const currentIndex = items.indexOf(document.activeElement as HTMLElement)
 
@@ -151,7 +158,7 @@ export function DropdownMenuContent({ className, align = 'end', children, ...pro
       className={cn(
         'absolute z-50 mt-2 min-w-44 rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-lg',
         align === 'end' ? 'right-0' : 'left-0',
-        className
+        className,
       )}
       {...props}
     >
@@ -165,7 +172,13 @@ export interface DropdownMenuItemProps extends ButtonHTMLAttributes<HTMLButtonEl
   variant?: 'default' | 'destructive'
 }
 
-export function DropdownMenuItem({ className, onSelect, onClick, variant = 'default', ...props }: DropdownMenuItemProps) {
+export function DropdownMenuItem({
+  className,
+  onSelect,
+  onClick,
+  variant = 'default',
+  ...props
+}: DropdownMenuItemProps) {
   const { setOpen } = useDropdownMenuContext('DropdownMenuItem')
 
   return (
@@ -181,8 +194,9 @@ export function DropdownMenuItem({ className, onSelect, onClick, variant = 'defa
         'flex w-full min-h-11 items-center gap-2 rounded-sm px-2 py-2 text-left text-sm',
         'outline-none focus-visible:bg-accent focus-visible:text-accent-foreground hover:bg-accent hover:text-accent-foreground',
         'disabled:pointer-events-none disabled:opacity-50',
-        variant === 'destructive' && 'text-destructive focus-visible:bg-destructive/10 hover:bg-destructive/10',
-        className
+        variant === 'destructive' &&
+          'text-destructive focus-visible:bg-destructive/10 hover:bg-destructive/10',
+        className,
       )}
       {...props}
     />
@@ -190,7 +204,12 @@ export function DropdownMenuItem({ className, onSelect, onClick, variant = 'defa
 }
 
 export function DropdownMenuLabel({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('px-2 py-1.5 text-xs font-medium text-muted-foreground', className)} {...props} />
+  return (
+    <div
+      className={cn('px-2 py-1.5 text-xs font-medium text-muted-foreground', className)}
+      {...props}
+    />
+  )
 }
 
 export function DropdownMenuSeparator({ className, ...props }: HTMLAttributes<HTMLHRElement>) {

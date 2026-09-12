@@ -1,4 +1,13 @@
-import { AudioLines, FileText, FolderGit2, Globe, MessageCircle, Newspaper, Video, type LucideIcon } from 'lucide-react'
+import {
+  AudioLines,
+  FileText,
+  FolderGit2,
+  Globe,
+  MessageCircle,
+  Newspaper,
+  Video,
+  type LucideIcon,
+} from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import type { ItemKind } from '@/components/common/types'
@@ -34,7 +43,7 @@ export function KindBadge({ kind, className }: KindBadgeProps) {
     <span
       className={cn(
         'inline-flex w-fit items-center gap-1 rounded-md border border-transparent bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground',
-        className
+        className,
       )}
     >
       <Icon className="size-3.5" aria-hidden="true" />

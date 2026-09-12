@@ -37,5 +37,4 @@ export function isPopupSaveMessage(value: unknown): value is PopupSaveMessage {
 
 /** Background's reply to a PopupSaveMessage. */
 export type PopupSaveReply =
-  | { ok: true; id: string; duplicate: boolean; truncated: boolean }
-  | { ok: false; message: string }
+  { ok: true; id: string; duplicate: boolean; truncated: boolean } | { ok: false; message: string }

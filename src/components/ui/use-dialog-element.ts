@@ -15,7 +15,7 @@ import { useEffect, useRef, type RefObject } from 'react'
  */
 export function useDialogElement(
   open: boolean,
-  onOpenChange: (open: boolean) => void
+  onOpenChange: (open: boolean) => void,
 ): RefObject<HTMLDialogElement | null> {
   const ref = useRef<HTMLDialogElement>(null)
 

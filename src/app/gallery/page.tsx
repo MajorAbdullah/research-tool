@@ -11,8 +11,24 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip } from '@/components/ui/tooltip'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,7 +65,15 @@ const ALL_STATUSES: ItemStatus[] = [
   'failed',
 ]
 
-function Section({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
+function Section({
+  title,
+  description,
+  children,
+}: {
+  title: string
+  description?: string
+  children: ReactNode
+}) {
   return (
     <section className="space-y-4 border-b border-border py-10 first:pt-0 last:border-b-0">
       <div className="space-y-1">
@@ -76,12 +100,14 @@ export default function GalleryPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <header className="space-y-2 pb-8">
-        <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Dev-only · P5 UI Foundation</p>
+        <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          Dev-only · P5 UI Foundation
+        </p>
         <h1 className="text-3xl font-semibold text-foreground">Component gallery</h1>
         <p className="max-w-2xl text-sm text-muted-foreground">
-          Every primitive and shared composite in <code className="text-xs">src/components/</code>, rendered from
-          fixture data. Resize the window (390px and up) and toggle the theme below to check both axes this page
-          exists to prove out.
+          Every primitive and shared composite in <code className="text-xs">src/components/</code>,
+          rendered from fixture data. Resize the window (390px and up) and toggle the theme below to
+          check both axes this page exists to prove out.
         </p>
         <div className="flex items-center gap-3 pt-2">
           <span className="text-sm text-muted-foreground">Theme:</span>
@@ -89,7 +115,10 @@ export default function GalleryPage() {
         </div>
       </header>
 
-      <Section title="Buttons" description="Every variant × size. All sizes meet the 44×44pt touch-target floor — density comes from padding and type, never from shrinking the tap height.">
+      <Section
+        title="Buttons"
+        description="Every variant × size. All sizes meet the 44×44pt touch-target floor — density comes from padding and type, never from shrinking the tap height."
+      >
         <div className="space-y-3">
           <Row>
             <Button>Default</Button>
@@ -111,7 +140,10 @@ export default function GalleryPage() {
         </div>
       </Section>
 
-      <Section title="Form controls" description="Native elements wherever one genuinely suffices (select, checkbox) — see each file's comment for why.">
+      <Section
+        title="Form controls"
+        description="Native elements wherever one genuinely suffices (select, checkbox) — see each file's comment for why."
+      >
         <div className="grid max-w-md gap-5">
           <div className="space-y-1.5">
             <Label htmlFor="gallery-input">Search query</Label>
@@ -161,7 +193,9 @@ export default function GalleryPage() {
             <TabsTrigger value="testing">Testing</TabsTrigger>
             <TabsTrigger value="archived">Archived</TabsTrigger>
           </TabsList>
-          <TabsContent value="inbox">Unreviewed items land here as soon as the pipeline finishes.</TabsContent>
+          <TabsContent value="inbox">
+            Unreviewed items land here as soon as the pipeline finishes.
+          </TabsContent>
           <TabsContent value="testing">Items you're actively trying out.</TabsContent>
           <TabsContent value="archived">Kept for reference, off the active board.</TabsContent>
         </Tabs>
@@ -169,7 +203,10 @@ export default function GalleryPage() {
 
       <Section title="Tooltip" description="Shows on hover and on keyboard focus alike.">
         <Row>
-          <Tooltip id="gallery-tooltip-reextract" label="Re-run extraction from the browser extension">
+          <Tooltip
+            id="gallery-tooltip-reextract"
+            label="Re-run extraction from the browser extension"
+          >
             <Button variant="outline" size="icon" aria-label="Re-extract">
               <Download className="size-4" />
             </Button>
@@ -182,7 +219,10 @@ export default function GalleryPage() {
         </Row>
       </Section>
 
-      <Section title="Dialog" description="Built on the native <dialog> element — free focus trap, Escape-to-close, and focus restoration.">
+      <Section
+        title="Dialog"
+        description="Built on the native <dialog> element — free focus trap, Escape-to-close, and focus restoration."
+      >
         <Dialog>
           <DialogTrigger>
             <Button variant="outline">Open dialog</Button>
@@ -195,8 +235,9 @@ export default function GalleryPage() {
               </DialogDescription>
             </DialogHeader>
             <p className="text-sm text-muted-foreground">
-              Currently at <strong className="text-foreground">metadata only</strong> — re-extracting after opening
-              the source with the browser extension usually upgrades it to full.
+              Currently at <strong className="text-foreground">metadata only</strong> —
+              re-extracting after opening the source with the browser extension usually upgrades it
+              to full.
             </p>
             <DialogFooter>
               <Button variant="outline">Cancel</Button>
@@ -206,7 +247,10 @@ export default function GalleryPage() {
         </Dialog>
       </Section>
 
-      <Section title="Sheet" description="Same native <dialog> mechanics as Dialog, docked to an edge. Default is a bottom sheet on phones, a right-side panel from sm: up — resize to see it switch.">
+      <Section
+        title="Sheet"
+        description="Same native <dialog> mechanics as Dialog, docked to an edge. Default is a bottom sheet on phones, a right-side panel from sm: up — resize to see it switch."
+      >
         <Sheet>
           <SheetTrigger>
             <Button variant="outline">Open filters</Button>
@@ -261,7 +305,10 @@ export default function GalleryPage() {
         <ToastDemoButtons />
       </Section>
 
-      <Section title="Skeleton" description="Carries the app's one signature motion moment — the shimmer sweep. See globals.css for the reasoning.">
+      <Section
+        title="Skeleton"
+        description="Carries the app's one signature motion moment — the shimmer sweep. See globals.css for the reasoning."
+      >
         <div className="max-w-sm space-y-2">
           <Skeleton className="h-4 w-3/4" />
           <Skeleton className="h-4 w-full" />
@@ -273,7 +320,10 @@ export default function GalleryPage() {
         <LoadingGrid count={4} />
       </Section>
 
-      <Section title="Kind badge" description="All 7 ItemKind values (the enum has 7, not 6 — see the final report).">
+      <Section
+        title="Kind badge"
+        description="All 7 ItemKind values (the enum has 7, not 6 — see the final report)."
+      >
         <Row>
           {ALL_KINDS.map((k) => (
             <KindBadge key={k} kind={k} />
@@ -281,7 +331,10 @@ export default function GalleryPage() {
         </Row>
       </Section>
 
-      <Section title="Status pill" description="All 9 ItemStatus values, bucketed into the system's five semantic tones.">
+      <Section
+        title="Status pill"
+        description="All 9 ItemStatus values, bucketed into the system's five semantic tones."
+      >
         <Row>
           {ALL_STATUSES.map((s) => (
             <StatusPill key={s} status={s} />
@@ -304,21 +357,27 @@ export default function GalleryPage() {
       >
         <div className="space-y-6">
           <div>
-            <p className="mb-2 text-xs font-medium text-muted-foreground">full (renders nothing):</p>
+            <p className="mb-2 text-xs font-medium text-muted-foreground">
+              full (renders nothing):
+            </p>
             <div className="flex min-h-6 items-center gap-2 text-sm text-muted-foreground italic">
               <ExtractionTierWarning tier="full" />
               nothing rendered
             </div>
           </div>
           <div>
-            <p className="mb-2 text-xs font-medium text-muted-foreground">compact (used inside ItemCard):</p>
+            <p className="mb-2 text-xs font-medium text-muted-foreground">
+              compact (used inside ItemCard):
+            </p>
             <Row>
               <ExtractionTierWarning tier="partial" />
               <ExtractionTierWarning tier="metadata_only" />
             </Row>
           </div>
           <div>
-            <p className="mb-2 text-xs font-medium text-muted-foreground">detailed (item-detail-style banner, with an action slot):</p>
+            <p className="mb-2 text-xs font-medium text-muted-foreground">
+              detailed (item-detail-style banner, with an action slot):
+            </p>
             <ExtractionTierWarning
               tier="metadata_only"
               variant="detailed"
@@ -333,7 +392,10 @@ export default function GalleryPage() {
         </div>
       </Section>
 
-      <Section title="Empty state" description="One flexible component, two different usages below.">
+      <Section
+        title="Empty state"
+        description="One flexible component, two different usages below."
+      >
         <div className="grid gap-6 sm:grid-cols-2">
           <EmptyState
             icon={Download}
@@ -362,7 +424,10 @@ export default function GalleryPage() {
         />
       </Section>
 
-      <Section title="ItemCard" description="All 7 kinds, plus edge cases: no thumbnail, no summary yet, a still-processing shimmer, starred, a long title, and a dropped-vs-failed distinction.">
+      <Section
+        title="ItemCard"
+        description="All 7 kinds, plus edge cases: no thumbnail, no summary yet, a still-processing shimmer, starred, a long title, and a dropped-vs-failed distinction."
+      >
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {FIXTURE_ITEMS.map((item) => (
             <ItemCard key={item.id} item={item} href={`#${item.id}`} />

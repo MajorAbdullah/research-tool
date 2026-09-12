@@ -32,15 +32,7 @@
       "description": "Save the current page to Sieve"
     }
   },
-  "permissions": [
-    "storage",
-    "activeTab",
-    "scripting",
-    "contextMenus"
-  ],
-  "optional_host_permissions": [
-    "http://*/*",
-    "https://*/*"
-  ],
+  "permissions": ["storage", "activeTab", "scripting", "contextMenus"],
+  "optional_host_permissions": ["http://*/*", "https://*/*"],
   "minimum_chrome_version": "116"
 }

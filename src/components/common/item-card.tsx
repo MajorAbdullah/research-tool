@@ -56,7 +56,7 @@ export function ItemCard({ item, href, className }: ItemCardProps) {
     <article
       className={cn(
         'relative flex flex-col gap-3 rounded-lg border border-border bg-card p-3 text-card-foreground',
-        className
+        className,
       )}
     >
       <div className="relative aspect-video w-full overflow-hidden rounded-md bg-muted">

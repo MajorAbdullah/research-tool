@@ -14,14 +14,20 @@ export function ToastDemoButtons() {
     <div className="flex flex-wrap gap-2">
       <Button
         variant="secondary"
-        onClick={() => toast({ title: 'Saved', description: 'The link was queued for extraction.' })}
+        onClick={() =>
+          toast({ title: 'Saved', description: 'The link was queued for extraction.' })
+        }
       >
         Default
       </Button>
       <Button
         variant="secondary"
         onClick={() =>
-          toast({ variant: 'success', title: 'Marked as tested', description: 'Moved to the Tested column.' })
+          toast({
+            variant: 'success',
+            title: 'Marked as tested',
+            description: 'Moved to the Tested column.',
+          })
         }
       >
         Success
@@ -41,7 +47,11 @@ export function ToastDemoButtons() {
       <Button
         variant="secondary"
         onClick={() =>
-          toast({ variant: 'destructive', title: 'Extraction failed', description: 'GitHub API rate limit reached.' })
+          toast({
+            variant: 'destructive',
+            title: 'Extraction failed',
+            description: 'GitHub API rate limit reached.',
+          })
         }
       >
         Destructive

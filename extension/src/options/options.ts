@@ -21,7 +21,9 @@ function setStatus(kind: 'success' | 'error' | 'info', message: string): void {
   statusEl.className = `status status--${kind}`
 }
 
-function parseOrigin(rawUrl: string): { ok: true; origin: string } | { ok: false; message: string } {
+function parseOrigin(
+  rawUrl: string,
+): { ok: true; origin: string } | { ok: false; message: string } {
   try {
     return { ok: true, origin: toOrigin(rawUrl) }
   } catch {
@@ -88,7 +90,10 @@ testButtonEl.addEventListener('click', () => {
       return
     }
 
-    const result = await checkHealth({ serverUrl: serverUrlEl.value.trim(), token: tokenEl.value.trim() })
+    const result = await checkHealth({
+      serverUrl: serverUrlEl.value.trim(),
+      token: tokenEl.value.trim(),
+    })
     if (result.ok) {
       setStatus('success', 'Connected — server is healthy.')
     } else {

@@ -99,12 +99,17 @@ const sheetSideVariants = cva('', {
 })
 
 export interface SheetContentProps
-  extends HTMLAttributes<HTMLDialogElement>,
-    VariantPropsOf<typeof sheetSideVariants> {
+  extends HTMLAttributes<HTMLDialogElement>, VariantPropsOf<typeof sheetSideVariants> {
   hideCloseButton?: boolean
 }
 
-export function SheetContent({ className, side, children, hideCloseButton, ...props }: SheetContentProps) {
+export function SheetContent({
+  className,
+  side,
+  children,
+  hideCloseButton,
+  ...props
+}: SheetContentProps) {
   const { open, setOpen, titleId, descriptionId } = useSheetContext('SheetContent')
   const ref = useDialogElement(open, setOpen)
 
@@ -117,7 +122,7 @@ export function SheetContent({ className, side, children, hideCloseButton, ...pr
         'm-0 max-w-none overflow-y-auto border border-border bg-card p-6 text-card-foreground shadow-lg',
         'backdrop:bg-black/50',
         sheetSideVariants({ side }),
-        className
+        className,
       )}
       {...props}
     >
@@ -129,7 +134,7 @@ export function SheetContent({ className, side, children, hideCloseButton, ...pr
           aria-label="Close panel"
           className={cn(
             'absolute top-3 right-3 inline-flex size-touch items-center justify-center rounded-md text-muted-foreground',
-            'outline-none hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring'
+            'outline-none hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring',
           )}
         >
           <X className="size-4" />
@@ -145,14 +150,27 @@ export function SheetHeader({ className, ...props }: HTMLAttributes<HTMLDivEleme
 
 export function SheetTitle({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) {
   const { titleId } = useSheetContext('SheetTitle')
-  return <h2 id={titleId} className={cn('text-lg font-semibold text-foreground', className)} {...props} />
+  return (
+    <h2
+      id={titleId}
+      className={cn('text-lg font-semibold text-foreground', className)}
+      {...props}
+    />
+  )
 }
 
 export function SheetDescription({ className, ...props }: HTMLAttributes<HTMLParagraphElement>) {
   const { descriptionId } = useSheetContext('SheetDescription')
-  return <p id={descriptionId} className={cn('text-sm text-muted-foreground', className)} {...props} />
+  return (
+    <p id={descriptionId} className={cn('text-sm text-muted-foreground', className)} {...props} />
+  )
 }
 
 export function SheetFooter({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end', className)} {...props} />
+  return (
+    <div
+      className={cn('mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end', className)}
+      {...props}
+    />
+  )
 }

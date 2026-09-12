@@ -25,9 +25,17 @@ import type { ItemStatus } from '@/components/common/types'
  * research outcome, not an error, and conflating the two would make
  * "failed" less alarming when it matters.
  */
-const STATUS_CONFIG: Record<ItemStatus, { label: string; icon: LucideIcon; className: string; spin?: boolean }> = {
+const STATUS_CONFIG: Record<
+  ItemStatus,
+  { label: string; icon: LucideIcon; className: string; spin?: boolean }
+> = {
   queued: { label: 'Queued', icon: Clock, className: 'bg-muted text-muted-foreground' },
-  processing: { label: 'Processing', icon: LoaderCircle, className: 'bg-muted text-muted-foreground', spin: true },
+  processing: {
+    label: 'Processing',
+    icon: LoaderCircle,
+    className: 'bg-muted text-muted-foreground',
+    spin: true,
+  },
   inbox: { label: 'Inbox', icon: Inbox, className: 'bg-primary/10 text-primary' },
   to_test: { label: 'To test', icon: Circle, className: 'bg-secondary text-secondary-foreground' },
   testing: { label: 'Testing', icon: FlaskConical, className: 'bg-warning/15 text-warning' },
@@ -50,7 +58,7 @@ export function StatusPill({ status, className }: StatusPillProps) {
       className={cn(
         'inline-flex w-fit items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium',
         toneClassName,
-        className
+        className,
       )}
     >
       <Icon className={cn('size-3.5', spin && 'animate-spin')} aria-hidden="true" />
