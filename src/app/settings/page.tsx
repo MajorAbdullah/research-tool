@@ -3,7 +3,7 @@ import { AlertTriangle, Check, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { getSqlite } from '@/db/client'
 import { loadAiConfig } from '@/lib/ai'
-import { requireSessionUserId } from '@/services/auth-context'
+import { requireSessionUserIdOrRedirect } from '@/services/auth-context'
 
 export const metadata = { title: 'Settings · Sieve' }
 export const dynamic = 'force-dynamic'
@@ -61,7 +61,7 @@ function mask(value: string | undefined): string {
 }
 
 export default async function SettingsPage() {
-  await requireSessionUserId()
+  await requireSessionUserIdOrRedirect()
 
   const db = getSqlite()
   const one = <T,>(sql: string): T => db.prepare(sql).get() as T

@@ -4,13 +4,19 @@
  * string user id into the number every query needs). Reused, not reimplemented, per this phase's
  * brief.
  *
- * `proxy.ts` already gates these routes at the middleware layer, but every route here
- * independently re-checks auth too (CLAUDE.md non-negotiable: "check authentication and
- * authorization server-side on every protected route" — not "trust one upstream gate"). It also
- * has to: a route handler under test (as `tests/integration/capture.test.ts` does) calls the
- * exported `POST`/`GET` function directly, bypassing `proxy.ts` entirely, so the 401 behaviour
- * the API contract promises has to live here regardless.
+ * IMPORTANT: `proxy.ts` does NOT currently gate anything. It was written to, and reads as
+ * though it does, but it never executes — verified behaviourally: an unauthenticated GET of a
+ * page returns 200 rather than redirecting, and `.next/server/middleware-manifest.json` is
+ * emitted empty. Next 16.3.5 detects the file (a duplicate `middleware.ts` triggers its
+ * "both detected" error) yet never compiles it into a middleware bundle.
+ *
+ * So these per-request checks are not defence in depth — they are the ONLY defence, which is
+ * exactly why CLAUDE.md's non-negotiable says to check on every protected route rather than
+ * trusting one upstream gate. A route handler under test also calls the exported `POST`/`GET`
+ * directly, bypassing any middleware, so the 401 behaviour has to live here regardless.
  */
+
+import { redirect } from 'next/navigation'
 
 import { auth, verifyExtensionToken } from '@/lib/auth'
 import { requireUserId } from '@/repositories/scoping'
@@ -37,6 +43,23 @@ export async function requireSessionUserId(): Promise<number> {
   const session = await auth()
   if (!session?.user?.id) {
     throw ApiError.unauthorized()
+  }
+  return requireUserId(session.user.id)
+}
+
+/**
+ * For Server Component PAGES, not routes.
+ *
+ * `requireSessionUserId()` throws an `ApiError`, which a route handler catches and turns into a
+ * clean 401 — but a page has no catch, so the same throw surfaces as a **500**. An unauthenticated
+ * visitor should be sent to the login form, not shown a server error, so pages call this instead.
+ *
+ * This is the real auth gate for pages, because `proxy.ts` never runs (see the file header).
+ */
+export async function requireSessionUserIdOrRedirect(): Promise<number> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    redirect('/login')
   }
   return requireUserId(session.user.id)
 }

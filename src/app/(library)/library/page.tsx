@@ -13,7 +13,7 @@ import { LibraryQueryProvider } from '@/components/library/query-provider'
 import { LibraryView } from '@/components/library/library-view'
 import { parseLibraryQueryState, toApiSearchParams } from '@/components/library/query-params'
 import type { ItemSummary, SearchResultSummary, WirePage } from '@/components/library/types'
-import { requireSessionUserId } from '@/services/auth-context'
+import { requireSessionUserIdOrRedirect } from '@/services/auth-context'
 import { listItems } from '@/services/items-service'
 import { parseItemsListQuery } from '@/services/items-schema'
 import { hybridSearch, parseSearchQuery, type SearchResultItem } from '@/lib/search'
@@ -81,9 +81,14 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
   const apiParams = toApiSearchParams(state)
   const initialQueryKey = apiParams.toString()
 
+  // OUTSIDE the try/catch below, deliberately. Next's `redirect()` works by THROWING a special
+  // error, so a surrounding catch swallows it — which is what happened here: an unauthenticated
+  // visitor got a 200 with an empty library instead of the login page, and the swallowed redirect
+  // was logged as "server-side initial fetch failed". Auth must resolve before the guard exists.
+  const userId = await requireSessionUserIdOrRedirect()
+
   let initialPage: WirePage<ItemSummary> | WirePage<SearchResultSummary> | null = null
   try {
-    const userId = await requireSessionUserId()
     initialPage = await fetchInitialPage(userId, state, apiParams)
   } catch (err) {
     // Never crash the page for a first-paint hiccup — LibraryView's client-side fetch (the exact

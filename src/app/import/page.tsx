@@ -1,4 +1,4 @@
-import { requireSessionUserId } from '@/services/auth-context'
+import { requireSessionUserIdOrRedirect } from '@/services/auth-context'
 
 import { ImportClient } from './import-client'
 
@@ -6,7 +6,7 @@ export const metadata = { title: 'Import · Sieve' }
 export const dynamic = 'force-dynamic'
 
 export default async function ImportPage() {
-  await requireSessionUserId()
+  await requireSessionUserIdOrRedirect()
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-6">

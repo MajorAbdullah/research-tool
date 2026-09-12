@@ -53,7 +53,12 @@ function unauthorizedJson(): NextResponse {
   )
 }
 
-export default auth((request) => {
+// MUST be the NAMED export `proxy`, and MUST sit next to `app/` (so `src/proxy.ts` here,
+// since the app lives in `src/app/`). Next 16's upgrade guide says a default export is
+// tolerated, but in practice only the named export registers: with `export default` at the
+// repo root, `.next/server/middleware-manifest.json` came out with ZERO entries and this
+// entire route gate silently never ran. Verified by inspecting that manifest.
+export const proxy = auth((request) => {
   const { pathname } = request.nextUrl
 
   if (isPublicPath(pathname)) {
