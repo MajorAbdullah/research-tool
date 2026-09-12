@@ -9,18 +9,9 @@ export { tokenizeForFts, buildFtsMatchExpression, MAX_FTS_TERMS } from './fts-sa
 
 export { buildItemFilterFragment, type SearchFilters, type SqlFragment } from './filters'
 
-export {
-  reciprocalRankFusion,
-  DEFAULT_RRF_K,
-  type RankedIds,
-  type FusedResult,
-} from './rrf'
+export { reciprocalRankFusion, DEFAULT_RRF_K, type RankedIds, type FusedResult } from './rrf'
 
-export {
-  vectorSearch,
-  type VectorSearchHit,
-  type VectorSearchOptions,
-} from './vector-search'
+export { vectorSearch, type VectorSearchHit, type VectorSearchOptions } from './vector-search'
 
 export { ftsSearch, ftsSnippet, type FtsSearchHit, type FtsSearchOptions } from './fts-search'
 

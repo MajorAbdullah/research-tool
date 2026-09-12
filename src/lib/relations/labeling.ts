@@ -44,9 +44,7 @@ function loadItemContext(
   if (itemIds.length === 0) return new Map()
   const placeholders = itemIds.map(() => '?').join(',')
   const rows = sqlite
-    .prepare(
-      `SELECT id, title, summary_tldr AS blurb FROM items WHERE id IN (${placeholders})`,
-    )
+    .prepare(`SELECT id, title, summary_tldr AS blurb FROM items WHERE id IN (${placeholders})`)
     .all(...itemIds) as ItemContextRow[]
   return new Map(rows.map((row) => [row.id, row]))
 }

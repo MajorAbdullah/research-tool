@@ -17,6 +17,7 @@ import { getLocalEmbeddingProvider } from '@/lib/embeddings'
 import { ftsSearch } from '@/lib/search/fts-search'
 import { vectorSearch } from '@/lib/search/vector-search'
 import { reciprocalRankFusion, DEFAULT_RRF_K } from '@/lib/search/rrf'
+import { tokenizeForFts } from '@/lib/search/fts-sanitize'
 import { CORPUS, RETRIEVAL_CASES } from '../golden-set'
 
 const USER_ID = 1
@@ -88,7 +89,10 @@ function docIdsOf(itemIds: readonly number[]): string[] {
  * rank `k` whose item is actually relevant. Rewards relevant items ranking early, not just being
  * present somewhere in the list. 0 when nothing relevant was retrieved at all.
  */
-function contextPrecision(retrievedDocIds: readonly string[], relevant: ReadonlySet<string>): number {
+function contextPrecision(
+  retrievedDocIds: readonly string[],
+  relevant: ReadonlySet<string>,
+): number {
   let hits = 0
   let sumPrecisionAtK = 0
   retrievedDocIds.forEach((docId, index) => {
@@ -117,6 +121,17 @@ function average(values: readonly number[]): number {
   return values.length === 0 ? 0 : values.reduce((a, b) => a + b, 0) / values.length
 }
 
+interface CaseReport {
+  query: string
+  recallAt10: number
+  /** 1-based rank(s) at which each ground-truth relevant doc actually landed, in the same order
+   *  as `testCase.relevant` — `null` when a doc didn't appear in the ranking at all. On this
+   *  golden set's tiny (7-doc) corpus, recall@10 alone is a weak signal (requesting top-10 from a
+   *  7-item universe means "did it match at all," not "did it rank well") — the rank position is
+   *  what actually shows whether a method is winning cleanly or barely scraping by. */
+  ranks: (number | null)[]
+}
+
 interface MethodReport {
   name: string
   /** Context precision, averaged across every case — a distinct number from recall, never
@@ -124,12 +139,15 @@ interface MethodReport {
   precision: number
   /** Context recall@10, averaged across every case. */
   recall: number
-  recallAt10ByCase: { query: string; recallAt10: number }[]
+  cases: CaseReport[]
 }
 
-function evaluateMethod(name: string, rankingsByCase: readonly (readonly number[])[]): MethodReport {
+function evaluateMethod(
+  name: string,
+  rankingsByCase: readonly (readonly number[])[],
+): MethodReport {
   const precisions: number[] = []
-  const recallAt10ByCase: { query: string; recallAt10: number }[] = []
+  const cases: CaseReport[] = []
 
   RETRIEVAL_CASES.forEach((testCase, index) => {
     const ranking = rankingsByCase[index] ?? []
@@ -137,14 +155,21 @@ function evaluateMethod(name: string, rankingsByCase: readonly (readonly number[
     const relevant = new Set(testCase.relevant)
 
     precisions.push(contextPrecision(retrievedDocIds, relevant))
-    recallAt10ByCase.push({ query: testCase.query, recallAt10: recallAtK(retrievedDocIds, relevant, 10) })
+    cases.push({
+      query: testCase.query,
+      recallAt10: recallAtK(retrievedDocIds, relevant, 10),
+      ranks: testCase.relevant.map((docId) => {
+        const position = retrievedDocIds.indexOf(docId)
+        return position === -1 ? null : position + 1
+      }),
+    })
   })
 
   return {
     name,
     precision: average(precisions),
-    recall: average(recallAt10ByCase.map((r) => r.recallAt10)),
-    recallAt10ByCase,
+    recall: average(cases.map((c) => c.recallAt10)),
+    cases,
   }
 }
 
@@ -153,85 +178,122 @@ function printReport(report: MethodReport): void {
     `\n[${report.name}]  context precision = ${report.precision.toFixed(3)}   ` +
       `context recall@10 = ${report.recall.toFixed(3)}`,
   )
-  for (const row of report.recallAt10ByCase) {
-    console.log(`  recall@10 = ${row.recallAt10.toFixed(2)}  — "${row.query}"`)
+  for (const row of report.cases) {
+    const rankSummary = row.ranks.map((r) => (r === null ? 'NOT FOUND' : `#${r}`)).join(', ')
+    console.log(
+      `  recall@10 = ${row.recallAt10.toFixed(2)}  rank(s) = [${rankSummary}]  — "${row.query}"`,
+    )
   }
 }
 
 describe('hybrid search retrieval eval (golden set)', () => {
-  it(
-    'reports context precision + context recall separately for FTS-only, vector-only, and RRF-fused',
-    async () => {
-      const provider = getLocalEmbeddingProvider()
+  it('reports context precision + context recall separately for FTS-only, vector-only, and RRF-fused', async () => {
+    const provider = getLocalEmbeddingProvider()
 
-      const ftsRankings: number[][] = []
-      const vectorRankings: number[][] = []
-      const fusedRankings: number[][] = []
+    const ftsRankings: number[][] = []
+    const vectorRankings: number[][] = []
+    const fusedRankings: number[][] = []
 
-      for (const testCase of RETRIEVAL_CASES) {
-        const ftsHits = ftsSearch(db, { userId: USER_ID, query: testCase.query, limit: RETRIEVE_LIMIT })
-        // embedQuery(), never embed() — the query side of BGE's asymmetric instruction prefix.
-        const queryEmbedding = await provider.embedQuery(testCase.query)
-        const vectorHits = vectorSearch(db, {
-          userId: USER_ID,
-          queryEmbedding,
-          limit: RETRIEVE_LIMIT,
-        })
-        const fused = reciprocalRankFusion(
-          { fts: ftsHits.map((h) => h.itemId), vector: vectorHits.map((h) => h.itemId) },
-          DEFAULT_RRF_K,
-        )
-
-        ftsRankings.push(ftsHits.map((h) => h.itemId))
-        vectorRankings.push(vectorHits.map((h) => h.itemId))
-        fusedRankings.push(fused.map((f) => f.id))
-      }
-
-      const ftsReport = evaluateMethod('fts-only', ftsRankings)
-      const vectorReport = evaluateMethod('vector-only', vectorRankings)
-      const fusedReport = evaluateMethod('rrf-fused', fusedRankings)
-
-      console.log('\n=== Retrieval eval: context precision & context recall (reported separately) ===')
-      printReport(ftsReport)
-      printReport(vectorReport)
-      printReport(fusedReport)
-
-      const fusedCombined = fusedReport.precision + fusedReport.recall
-      const bestSingleCombined = Math.max(
-        ftsReport.precision + ftsReport.recall,
-        vectorReport.precision + vectorReport.recall,
+    for (const testCase of RETRIEVAL_CASES) {
+      const ftsHits = ftsSearch(db, {
+        userId: USER_ID,
+        query: testCase.query,
+        limit: RETRIEVE_LIMIT,
+      })
+      // embedQuery(), never embed() — the query side of BGE's asymmetric instruction prefix.
+      const queryEmbedding = await provider.embedQuery(testCase.query)
+      const vectorHits = vectorSearch(db, {
+        userId: USER_ID,
+        queryEmbedding,
+        limit: RETRIEVE_LIMIT,
+      })
+      const fused = reciprocalRankFusion(
+        { fts: ftsHits.map((h) => h.itemId), vector: vectorHits.map((h) => h.itemId) },
+        DEFAULT_RRF_K,
       )
-      if (fusedCombined + 1e-9 < bestSingleCombined) {
+
+      ftsRankings.push(ftsHits.map((h) => h.itemId))
+      vectorRankings.push(vectorHits.map((h) => h.itemId))
+      fusedRankings.push(fused.map((f) => f.id))
+    }
+
+    const ftsReport = evaluateMethod('fts-only', ftsRankings)
+    const vectorReport = evaluateMethod('vector-only', vectorRankings)
+    const fusedReport = evaluateMethod('rrf-fused', fusedRankings)
+
+    console.log(
+      '\n=== Retrieval eval: context precision & context recall (reported separately) ===',
+    )
+    printReport(ftsReport)
+    printReport(vectorReport)
+    printReport(fusedReport)
+
+    // ---- Diagnostic, not graded: is Sieve's real bm25()-over-{title,tldr,tags,content} index
+    // finding the flagship case via the clickbait TITLE, or via the transcript CONTENT? Both
+    // are legitimate per docs/API.md/CLAUDE.md (items_fts indexes all four columns) — but a
+    // naive title-only keyword search (the "grep my bookmark titles" status quo this product
+    // replaces) is the thing the user's actual complaint is about, so it's worth showing
+    // explicitly which column is doing the work, rather than leaving that implicit in a 1.000.
+    console.log(
+      '\n=== Diagnostic (not graded): would a naive TITLE-ONLY keyword match find it? ===',
+    )
+    for (const testCase of RETRIEVAL_CASES) {
+      const queryTokens = new Set(tokenizeForFts(testCase.query))
+      for (const docId of testCase.relevant) {
+        const doc = CORPUS.find((d) => d.id === docId)
+        if (!doc) continue
+        const titleTokens = new Set(tokenizeForFts(doc.title))
+        const titleAlone = [...queryTokens].some((t) => titleTokens.has(t))
         console.log(
-          '\n*** FINDING: RRF fusion did NOT beat the better of the two single rankings on this ' +
-            'golden set — see the final report for what this means. ***',
+          `  "${testCase.query}" -> ${docId} (title "${doc.title}"): ` +
+            `${titleAlone ? 'title alone matches' : 'title alone finds NOTHING — only the transcript/content saves it'}`,
         )
-      } else {
-        console.log('\nRRF fusion matched or beat both single rankings on this golden set.')
       }
+    }
 
-      // ---- Flagship assertions — see golden-set.ts's rationale for each ----
-      const diffusionCase = RETRIEVAL_CASES.findIndex((c) => c.query === 'video diffusion fine-tuning')
-      expect(diffusionCase, 'the flagship "video diffusion fine-tuning" case must exist in the golden set').toBeGreaterThanOrEqual(0)
-      const diffusionRanking = docIdsOf(fusedRankings[diffusionCase] ?? [])
-      expect(
-        diffusionRanking,
-        'flagship case: "video diffusion fine-tuning" must retrieve reel-diffusion (a pure-clickbait ' +
-          'title with no lexical overlap) — if this fails, semantic retrieval is broken',
-      ).toContain('reel-diffusion')
+    const fusedCombined = fusedReport.precision + fusedReport.recall
+    const bestSingleCombined = Math.max(
+      ftsReport.precision + ftsReport.recall,
+      vectorReport.precision + vectorReport.recall,
+    )
+    if (fusedCombined + 1e-9 < bestSingleCombined) {
+      console.log(
+        '\n*** FINDING: RRF fusion did NOT beat the better of the two single rankings on this ' +
+          'golden set — see the final report for what this means. ***',
+      )
+    } else {
+      console.log('\nRRF fusion matched or beat both single rankings on this golden set.')
+    }
 
-      const pagedAttnCase = RETRIEVAL_CASES.findIndex((c) => c.query === 'PagedAttention')
-      expect(pagedAttnCase, 'the flagship "PagedAttention" case must exist in the golden set').toBeGreaterThanOrEqual(0)
-      const pagedAttnRanking = docIdsOf(fusedRankings[pagedAttnCase] ?? [])
-      expect(
-        pagedAttnRanking,
-        'flagship case: "PagedAttention" must retrieve vllm — if this fails, the keyword half of ' +
-          'the hybrid is broken',
-      ).toContain('vllm')
+    // ---- Flagship assertions — see golden-set.ts's rationale for each ----
+    const diffusionCase = RETRIEVAL_CASES.findIndex(
+      (c) => c.query === 'video diffusion fine-tuning',
+    )
+    expect(
+      diffusionCase,
+      'the flagship "video diffusion fine-tuning" case must exist in the golden set',
+    ).toBeGreaterThanOrEqual(0)
+    const diffusionRanking = docIdsOf(fusedRankings[diffusionCase] ?? [])
+    expect(
+      diffusionRanking,
+      'flagship case: "video diffusion fine-tuning" must retrieve reel-diffusion (a pure-clickbait ' +
+        'title with no lexical overlap) — if this fails, semantic retrieval is broken',
+    ).toContain('reel-diffusion')
 
-      // A sanity floor, not a tuning target — this is a golden set, not a fuzz test. If this
-      // drifts near 0, something is structurally broken, not merely "needs tuning".
-      expect(fusedReport.recall).toBeGreaterThan(0.5)
-    },
-  )
+    const pagedAttnCase = RETRIEVAL_CASES.findIndex((c) => c.query === 'PagedAttention')
+    expect(
+      pagedAttnCase,
+      'the flagship "PagedAttention" case must exist in the golden set',
+    ).toBeGreaterThanOrEqual(0)
+    const pagedAttnRanking = docIdsOf(fusedRankings[pagedAttnCase] ?? [])
+    expect(
+      pagedAttnRanking,
+      'flagship case: "PagedAttention" must retrieve vllm — if this fails, the keyword half of ' +
+        'the hybrid is broken',
+    ).toContain('vllm')
+
+    // A sanity floor, not a tuning target — this is a golden set, not a fuzz test. If this
+    // drifts near 0, something is structurally broken, not merely "needs tuning".
+    expect(fusedReport.recall).toBeGreaterThan(0.5)
+  })
 })

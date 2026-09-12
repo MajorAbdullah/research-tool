@@ -48,7 +48,9 @@ describe('collectPendingPairs', () => {
     makeChunk(db, a, 'a', { seed: 1 })
     const b = makeItem(db, { id: 2 })
     makeChunk(db, b, 'b', { seed: 1 })
-    db.prepare('insert into relations (item_a, item_b, type, score) values (1,2,?,0.5)').run('similar')
+    db.prepare('insert into relations (item_a, item_b, type, score) values (1,2,?,0.5)').run(
+      'similar',
+    )
 
     expect(collectPendingPairs(db, { userId: 1 })).toEqual([])
   })
@@ -87,7 +89,7 @@ describe('collectPendingPairs', () => {
     expect(pairs.every((p) => p.itemA === 1 || p.itemB === 1)).toBe(true)
   })
 
-  it('scopes candidates by userId — another user\'s items are never walked or paired', () => {
+  it("scopes candidates by userId — another user's items are never walked or paired", () => {
     makeUser(db, 2)
     const mine = makeItem(db, { id: 1, userId: 1 })
     makeChunk(db, mine, 'mine', { userId: 1, seed: 1 })

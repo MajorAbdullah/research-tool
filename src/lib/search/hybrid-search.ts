@@ -49,8 +49,7 @@ export function clampLimit(limit: number | undefined): number {
 
 function buildChunkSnippet(sqlite: Database.Database, chunkId: number): string | null {
   const row = sqlite.prepare('SELECT text FROM chunks WHERE id = ?').get(chunkId) as
-    | { text: string }
-    | undefined
+    { text: string } | undefined
   if (!row) return null
   const text = row.text.trim()
   if (text.length <= SNIPPET_FALLBACK_LENGTH) return text

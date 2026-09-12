@@ -41,7 +41,7 @@ describe('computeMeanEmbedding', () => {
     mean?.forEach((v, i) => expect(v).toBeCloseTo(((a[i] ?? 0) + (b[i] ?? 0)) / 2, 5))
   })
 
-  it('only averages this item\'s own chunks, not another item\'s', () => {
+  it("only averages this item's own chunks, not another item's", () => {
     const item = makeItem(db, { id: 1 })
     makeChunk(db, item, 'a', { seed: 1 })
     const other = makeItem(db, { id: 2 })
@@ -89,7 +89,7 @@ describe('findItemNeighbors', () => {
     expect(findItemNeighbors(db, { itemId: target, userId: 1, topK: 3 })).toHaveLength(3)
   })
 
-  it('never crosses the user boundary (reuses vectorSearch\'s access-control guarantee)', () => {
+  it("never crosses the user boundary (reuses vectorSearch's access-control guarantee)", () => {
     makeUser(db, 2)
     const target = makeItem(db, { id: 1, userId: 1 })
     makeChunk(db, target, 'target', { userId: 1, seed: 1 })

@@ -1,11 +1,19 @@
 import { describe, expect, it, afterEach, beforeEach, vi } from 'vitest'
 import type { EmbeddingProvider } from '@/types/contracts'
-import { hybridSearch, ftsOnlySearch, clampLimit, DEFAULT_PAGE_LIMIT, MAX_PAGE_LIMIT } from '@/lib/search/hybrid-search'
+import {
+  hybridSearch,
+  ftsOnlySearch,
+  clampLimit,
+  DEFAULT_PAGE_LIMIT,
+  MAX_PAGE_LIMIT,
+} from '@/lib/search/hybrid-search'
 import { decodeSearchCursor } from '@/lib/search/pagination'
 import { makeTestDb, fakeEmbedding, type TestDb } from '../../helpers/db'
 import { makeUser, makeItem, makeChunk } from '../../helpers/factories'
 
-function fakeEmbeddingProvider(queryVector: readonly number[] = Array.from(fakeEmbedding(1))): EmbeddingProvider {
+function fakeEmbeddingProvider(
+  queryVector: readonly number[] = Array.from(fakeEmbedding(1)),
+): EmbeddingProvider {
   return {
     model: 'fake-embedder',
     dimensions: queryVector.length,
@@ -63,7 +71,10 @@ describe('hybridSearch / ftsOnlySearch', () => {
   it('fuses FTS and vector rankings — an item matching both ranks above one matching only one', async () => {
     const both = makeItem(db, { id: 1, content: 'diffusion model walkthrough' })
     makeChunk(db, both, 'diffusion model walkthrough', { seed: 1 })
-    const ftsOnly = makeItem(db, { id: 2, content: 'diffusion model walkthrough but different vector' })
+    const ftsOnly = makeItem(db, {
+      id: 2,
+      content: 'diffusion model walkthrough but different vector',
+    })
     makeChunk(db, ftsOnly, 'diffusion model walkthrough but different vector', { seed: 77 })
 
     const result = await hybridSearch(db, fakeEmbeddingProvider(Array.from(fakeEmbedding(1))), {
@@ -116,7 +127,7 @@ describe('hybridSearch / ftsOnlySearch', () => {
     expect(thirdPage.page.next_cursor).toBeNull()
   })
 
-  it('never returns another user\'s item, even for a semantically-identical query vector', async () => {
+  it("never returns another user's item, even for a semantically-identical query vector", async () => {
     makeUser(db, 2)
     const theirs = makeItem(db, { id: 1, userId: 2, content: 'diffusion model' })
     makeChunk(db, theirs, 'diffusion model', { userId: 2, seed: 1 })
@@ -142,7 +153,7 @@ describe('hybridSearch / ftsOnlySearch', () => {
     expect(result.data.map((d) => d.id)).toEqual(['itm_2'])
   })
 
-  it('the cursor decodes to the last row\'s own (score, id)', async () => {
+  it("the cursor decodes to the last row's own (score, id)", async () => {
     for (let i = 1; i <= 2; i++) {
       const item = makeItem(db, { id: i, content: `diffusion item ${i}` })
       makeChunk(db, item, `diffusion item ${i}`, { seed: i })

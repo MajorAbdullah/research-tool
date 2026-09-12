@@ -16,7 +16,14 @@ describe('storeLabeledRelations', () => {
   afterEach(() => db.close())
 
   function labeled(overrides: Partial<LabeledPair> = {}): LabeledPair {
-    return { itemA: 1, itemB: 2, type: 'similar', rationale: 'because reasons', distance: 0.2, ...overrides }
+    return {
+      itemA: 1,
+      itemB: 2,
+      type: 'similar',
+      rationale: 'because reasons',
+      distance: 0.2,
+      ...overrides,
+    }
   }
 
   it('inserts a labeled pair with a distance-derived score', () => {

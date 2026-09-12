@@ -19,9 +19,15 @@ describe('vectorSearch', () => {
     makeChunk(db, near, 'near', { seed: 1 })
     makeChunk(db, mid, 'mid', { seed: 10 })
 
-    const hits = vectorSearch(db, { userId: 1, queryEmbedding: Array.from(fakeEmbedding(1)), limit: 10 })
+    const hits = vectorSearch(db, {
+      userId: 1,
+      queryEmbedding: Array.from(fakeEmbedding(1)),
+      limit: 10,
+    })
     expect(hits[0]?.itemId).toBe(near) // seed 1 == query seed -> distance 0, must rank first
-    expect(hits.map((h) => h.distance)).toEqual([...hits.map((h) => h.distance)].sort((a, b) => a - b))
+    expect(hits.map((h) => h.distance)).toEqual(
+      [...hits.map((h) => h.distance)].sort((a, b) => a - b),
+    )
   })
 
   it('dedupes to items: an item with many matching chunks appears once, ranked by its best chunk', () => {
@@ -33,7 +39,11 @@ describe('vectorSearch', () => {
     const other = makeItem(db, { id: 2 })
     makeChunk(db, other, 'other', { seed: 30 })
 
-    const hits = vectorSearch(db, { userId: 1, queryEmbedding: Array.from(fakeEmbedding(1)), limit: 10 })
+    const hits = vectorSearch(db, {
+      userId: 1,
+      queryEmbedding: Array.from(fakeEmbedding(1)),
+      limit: 10,
+    })
     const itemHits = hits.filter((h) => h.itemId === item)
     expect(itemHits).toHaveLength(1)
     expect(itemHits[0]?.distance).toBe(0)
@@ -70,14 +80,18 @@ describe('vectorSearch', () => {
   })
 
   it('returns [] for an empty chunk_vec table, a non-positive limit, or no matches', () => {
-    expect(vectorSearch(db, { userId: 1, queryEmbedding: Array.from(fakeEmbedding(1)), limit: 10 })).toEqual([])
+    expect(
+      vectorSearch(db, { userId: 1, queryEmbedding: Array.from(fakeEmbedding(1)), limit: 10 }),
+    ).toEqual([])
 
     const item = makeItem(db, { id: 1 })
     makeChunk(db, item, 'x', { seed: 1 })
-    expect(vectorSearch(db, { userId: 1, queryEmbedding: Array.from(fakeEmbedding(1)), limit: 0 })).toEqual([])
+    expect(
+      vectorSearch(db, { userId: 1, queryEmbedding: Array.from(fakeEmbedding(1)), limit: 0 }),
+    ).toEqual([])
   })
 
-  describe('access control: another user\'s chunk is UNREACHABLE, not merely unshown', () => {
+  describe("access control: another user's chunk is UNREACHABLE, not merely unshown", () => {
     /**
      * The adversarial case verified empirically while designing this module: fifty of "their"
      * chunks sit at the query's EXACT embedding (distance 0) — maximally competitive — while
@@ -104,12 +118,14 @@ describe('vectorSearch', () => {
           queryEmbedding: Array.from(fakeEmbedding(1)),
           limit,
         })
-        expect(hits.every((h) => h.itemId === mine), `limit=${limit}: leaked a foreign item id`).toBe(
-          true,
-        )
-        expect(hits.map((h) => h.itemId), `limit=${limit}: failed to find my own item at all`).toContain(
-          mine,
-        )
+        expect(
+          hits.every((h) => h.itemId === mine),
+          `limit=${limit}: leaked a foreign item id`,
+        ).toBe(true)
+        expect(
+          hits.map((h) => h.itemId),
+          `limit=${limit}: failed to find my own item at all`,
+        ).toContain(mine)
       }
     })
 
@@ -120,7 +136,11 @@ describe('vectorSearch', () => {
       const theirs = makeItem(db, { id: 200, userId: 2 })
       makeChunk(db, theirs, 'their note', { userId: 2, seed: 1 })
 
-      const hits = vectorSearch(db, { userId: 2, queryEmbedding: Array.from(fakeEmbedding(1)), limit: 10 })
+      const hits = vectorSearch(db, {
+        userId: 2,
+        queryEmbedding: Array.from(fakeEmbedding(1)),
+        limit: 10,
+      })
       expect(hits.map((h) => h.itemId)).toEqual([theirs])
     })
   })

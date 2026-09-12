@@ -47,18 +47,29 @@ describe('loadItemSummaryRows', () => {
 
   it('picks the highest-confidence topic as primary, falling back a default color when unset', () => {
     makeItem(db, { id: 1 })
-    db.prepare("insert into topics (id, user_id, slug, label, color) values (1,1,'low','Low Conf',NULL)").run()
-    db.prepare("insert into topics (id, user_id, slug, label, color) values (2,1,'high','High Conf','#123456')").run()
+    db.prepare(
+      "insert into topics (id, user_id, slug, label, color) values (1,1,'low','Low Conf',NULL)",
+    ).run()
+    db.prepare(
+      "insert into topics (id, user_id, slug, label, color) values (2,1,'high','High Conf','#123456')",
+    ).run()
     db.prepare('insert into item_topics (item_id, topic_id, confidence) values (1,1,0.4)').run()
     db.prepare('insert into item_topics (item_id, topic_id, confidence) values (1,2,0.9)').run()
 
     const row = loadItemSummaryRows(db, [1], 1).get(1)
-    expect(row?.topic).toEqual({ slug: 'high', label: 'High Conf', color: '#123456', confidence: 0.9 })
+    expect(row?.topic).toEqual({
+      slug: 'high',
+      label: 'High Conf',
+      color: '#123456',
+      confidence: 0.9,
+    })
   })
 
   it('falls back to a default color when the chosen topic has none set', () => {
     makeItem(db, { id: 1 })
-    db.prepare("insert into topics (id, user_id, slug, label, color) values (1,1,'t','T',NULL)").run()
+    db.prepare(
+      "insert into topics (id, user_id, slug, label, color) values (1,1,'t','T',NULL)",
+    ).run()
     db.prepare('insert into item_topics (item_id, topic_id, confidence) values (1,1,0.9)').run()
     const row = loadItemSummaryRows(db, [1], 1).get(1)
     expect(row?.topic?.color).toBe('#6b7280')

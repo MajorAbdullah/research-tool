@@ -58,7 +58,9 @@ describe('parseSearchQuery', () => {
   })
 
   it('parses free-text tag/topic lists without enum validation', () => {
-    const parsed = parseSearchQuery(params({ q: 'x', tag: 'diffusion,fine-tuning', topic: 'video-diffusion' }))
+    const parsed = parseSearchQuery(
+      params({ q: 'x', tag: 'diffusion,fine-tuning', topic: 'video-diffusion' }),
+    )
     expect(parsed.filters.tag).toEqual(['diffusion', 'fine-tuning'])
     expect(parsed.filters.topic).toEqual(['video-diffusion'])
   })

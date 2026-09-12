@@ -15,7 +15,13 @@ import { requireUserId, ScopingError } from '@/repositories/scoping'
 import { getSqlite } from '@/db/client'
 import { getLocalEmbeddingProvider } from '@/lib/embeddings'
 import { logger } from '@/lib/logger'
-import { hybridSearch, ftsOnlySearch, parseSearchQuery, apiError, generateRequestId } from '@/lib/search'
+import {
+  hybridSearch,
+  ftsOnlySearch,
+  parseSearchQuery,
+  apiError,
+  generateRequestId,
+} from '@/lib/search'
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const requestId = generateRequestId()

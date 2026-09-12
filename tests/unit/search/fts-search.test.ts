@@ -13,7 +13,11 @@ describe('ftsSearch', () => {
   afterEach(() => db.close())
 
   it('prefix-matches: "diffus" finds an item containing "diffusion"', () => {
-    makeItem(db, { id: 1, title: 'this changes EVERYTHING', content: 'a video diffusion transformer walkthrough' })
+    makeItem(db, {
+      id: 1,
+      title: 'this changes EVERYTHING',
+      content: 'a video diffusion transformer walkthrough',
+    })
     const hits = ftsSearch(db, { userId: 1, query: 'diffus', limit: 10 })
     expect(hits.map((h) => h.itemId)).toEqual([1])
   })
@@ -38,7 +42,7 @@ describe('ftsSearch', () => {
     expect(hits.map((h) => h.itemId)).toEqual([1])
   })
 
-  it('never returns another user\'s item even when its content matches', () => {
+  it("never returns another user's item even when its content matches", () => {
     makeItem(db, { id: 1, userId: 2, content: 'video diffusion fine-tuning walkthrough' })
     const hits = ftsSearch(db, { userId: 1, query: 'diffusion', limit: 10 })
     expect(hits).toEqual([])

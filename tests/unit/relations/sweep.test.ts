@@ -18,16 +18,29 @@ type StructuredImpl = (
   options?: LLMCallOptions,
 ) => Promise<LLMStructuredResult<unknown>>
 
-function fakeProvider(structuredImpl: StructuredImpl): { provider: LLMProvider; structured: ReturnType<typeof vi.fn> } {
+function fakeProvider(structuredImpl: StructuredImpl): {
+  provider: LLMProvider
+  structured: ReturnType<typeof vi.fn>
+} {
   const structured = vi.fn(structuredImpl)
   return {
-    provider: { complete: vi.fn<() => Promise<LLMCompletion>>(), structured: structured as unknown as LLMProvider['structured'] },
+    provider: {
+      complete: vi.fn<() => Promise<LLMCompletion>>(),
+      structured: structured as unknown as LLMProvider['structured'],
+    },
     structured,
   }
 }
 
 function structuredResult(data: unknown): LLMStructuredResult<unknown> {
-  return { data, modelRequested: 'm', modelResolved: 'm', promptTokens: 1, completionTokens: 1, schemaStrategy: 'response_format' }
+  return {
+    data,
+    modelRequested: 'm',
+    modelResolved: 'm',
+    promptTokens: 1,
+    completionTokens: 1,
+    schemaStrategy: 'response_format',
+  }
 }
 
 describe('runRelationSweep', () => {
@@ -52,14 +65,24 @@ describe('runRelationSweep', () => {
     makeChunk(db, b, 'y', { seed: 1 })
 
     const { provider, structured } = fakeProvider(async () =>
-      structuredResult({ labels: [{ pairIndex: 0, type: 'alternative', rationale: 'both serve LLMs' }] }),
+      structuredResult({
+        labels: [{ pairIndex: 0, type: 'alternative', rationale: 'both serve LLMs' }],
+      }),
     )
 
     const outcome = await runRelationSweep(db, provider, { userId: 1 })
     expect(structured).toHaveBeenCalledTimes(1)
-    expect(outcome).toEqual({ ok: true, pairsConsidered: 1, inserted: 1, skipped: 0, llmRequests: 1 })
+    expect(outcome).toEqual({
+      ok: true,
+      pairsConsidered: 1,
+      inserted: 1,
+      skipped: 0,
+      llmRequests: 1,
+    })
 
-    const row = db.prepare('select * from relations where item_a=1 and item_b=2').get() as { type: string }
+    const row = db.prepare('select * from relations where item_a=1 and item_b=2').get() as {
+      type: string
+    }
     expect(row.type).toBe('alternative')
   })
 
@@ -85,7 +108,11 @@ describe('runRelationSweep', () => {
       makeChunk(db, item, `x${id}`, { seed: 1 })
     }
     const { provider, structured } = fakeProvider(async () => structuredResult({ labels: [] }))
-    const outcome = await runRelationSweep(db, provider, { userId: 1, maxPairs: 3, neighborsPerItem: 9 })
+    const outcome = await runRelationSweep(db, provider, {
+      userId: 1,
+      maxPairs: 3,
+      neighborsPerItem: 9,
+    })
     expect(structured).toHaveBeenCalledTimes(1)
     if (outcome.ok) expect(outcome.pairsConsidered).toBeLessThanOrEqual(3)
   })

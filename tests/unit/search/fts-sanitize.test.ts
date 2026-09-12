@@ -62,7 +62,10 @@ describe('buildFtsMatchExpression', () => {
       '   ',
     ]
     for (const query of adversarial) {
-      expect(() => ftsSearch(db, { userId: 1, query, limit: 10 }), `query: ${JSON.stringify(query)}`).not.toThrow()
+      expect(
+        () => ftsSearch(db, { userId: 1, query, limit: 10 }),
+        `query: ${JSON.stringify(query)}`,
+      ).not.toThrow()
     }
     db.close()
   })

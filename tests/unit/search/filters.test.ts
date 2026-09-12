@@ -43,6 +43,9 @@ describe('buildItemFilterFragment', () => {
   })
 
   it('ignores empty filter arrays the same as omitted filters', () => {
-    expect(buildItemFilterFragment({ kind: [], tag: [], topic: [] })).toEqual({ sql: '', params: [] })
+    expect(buildItemFilterFragment({ kind: [], tag: [], topic: [] })).toEqual({
+      sql: '',
+      params: [],
+    })
   })
 })

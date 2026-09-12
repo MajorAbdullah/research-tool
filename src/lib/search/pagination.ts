@@ -47,10 +47,7 @@ export function decodeSearchCursor(raw: string | undefined): SearchCursor | unde
   }
 }
 
-function isStrictlyAfterCursor(
-  item: { score: number; id: number },
-  cursor: SearchCursor,
-): boolean {
+function isStrictlyAfterCursor(item: { score: number; id: number }, cursor: SearchCursor): boolean {
   if (item.score !== cursor.score) return item.score < cursor.score
   return item.id > cursor.id
 }
