@@ -39,3 +39,6 @@ test-results/
 .vscode/*
 !.vscode/extensions.json
 .worktrees/
+
+# playwright-mcp session artifacts
+.playwright-mcp/

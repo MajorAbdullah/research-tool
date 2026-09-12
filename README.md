@@ -7,7 +7,7 @@
 Share a link from anywhere. Sieve extracts the real content, summarizes it, groups it by topic and
 media kind, tracks what you've actually evaluated, and makes the whole pile searchable by *meaning*.
 
-`Next.js 16` · `SQLite + sqlite-vec` · `One container` · `~370 MB` · `$0/month`
+`Next.js 16` · `SQLite + sqlite-vec` · `One container` · `~600 MB` · `$0/month`
 
 </div>
 
@@ -255,8 +255,12 @@ the extension does the scraping, and why enrichment is exactly one request.
 Built by GitHub Actions → pushed to GHCR → pulled over SSH → `docker compose up -d`, behind an nginx
 vhost with a certbot certificate. See [`deploy/`](./deploy/).
 
-It is designed to be a **good neighbour** on a busy box — one container, hard `mem_limit: 512m`,
+It is designed to be a **good neighbour** on a busy box — one container, hard `mem_limit: 1g`,
 capped worker concurrency, and ONNX inference capped at 2 threads.
+
+Most of that is the local embedding model: **~350 MB resident, measured**, of which almost all is
+native onnxruntime memory that GC never returns. That is the price of embeddings that cost no API
+quota and keep every search query on your own machine.
 
 ```bash
 # Backup (nightly, automatic) — SQLite makes this trivial

@@ -1,7 +1,7 @@
 # Sieve — Personal AI Research Library
 
 > **Generated:** 2026-09-12 · **Status:** Draft — awaiting approval
-> **Shape:** one container · Next.js 16 + SQLite + sqlite-vec · ~370 MB · 14 phases · **$0/month**
+> **Shape:** one container · Next.js 16 + SQLite + sqlite-vec · **~600 MB measured** · 14 phases · **$0/month**
 > Repo: `/Users/abdullah/pip/rep` · Prod: `sieve.teknikki.com` → `127.0.0.1:3060`
 
 ---
@@ -34,7 +34,7 @@ You're an AI R&D researcher drinking from a firehose: GitHub repos, papers, blog
 | | Karakeep | Sieve (this plan) |
 |---|---|---|
 | Containers | 3 (app + **headless Chrome** + Meilisearch) | **1** |
-| RAM | ~500 MB idle, ~800 MB active, 2 GB recommended | **~370 MB** |
+| RAM | ~500 MB idle, ~800 MB active, 2 GB recommended | **~600 MB** (measured) |
 | YouTube transcripts | ❌ [open feature request #1629](https://github.com/karakeep-app/karakeep/issues/1629) | ✅ via extension |
 | GitHub repo table | ❌ | ✅ |
 | Research status workflow | ❌ (lists can fake it) | ✅ |
@@ -55,14 +55,14 @@ You're an AI R&D researcher drinking from a firehose: GitHub repos, papers, blog
 | Fact | Value | Consequence |
 |---|---|---|
 | OS / CPU | Ubuntu 24.04.3, 6 vCPU AMD EPYC, no GPU | No local LLMs |
-| RAM | 11 GB total, **7.1 GB available, 1.4 GB swap already in use** | **Budget: ≤ 512 MB** |
+| RAM | 11 GB total, **7.1 GB available, 1.4 GB swap already in use** | **Budget: ≤ 1 GB** (measured ~600 MB; the embedding model is ~350 MB of it) |
 | Disk | 145 GB, **49 GB free (67% used)** | Text only — no media archiving |
 | Running | **~45 containers** (ERPNext, BillionMail, Medusa, n8n, 5× Postgres, Qdrant…) | Must be a good neighbour |
 | Ingress | host **nginx**, per-subdomain vhosts in `/etc/nginx/sites-enabled/` (`*.teknikki.com`) | Add one vhost, match the pattern |
 | Ports taken | 80, 443, 3000, 3002, 3005, 3050, 5433, 5434, 5678, 8010, 8080-8085, 8100, 8110, 8200, 9090, 9443 | **Claim `127.0.0.1:3060`** |
 | Docker / sudo | 29.0.0 + Compose v2.40.3 · passwordless sudo ✅ | Can write nginx vhost + certbot |
 
-One container, `mem_limit: 512m` (~370 MB actual), DB on a bind-mounted volume. Nothing else on the box is touched.
+One container, `mem_limit: 1g` (~370 MB actual), DB on a bind-mounted volume. Nothing else on the box is touched.
 
 ---
 
@@ -172,7 +172,7 @@ Under free-only, local embeddings win on four counts, not one:
 3. **No deprecation risk on the index.** If a remote embedding model is retired, every stored vector becomes unusable and 50k chunks need re-embedding. A model file pinned in a volume cannot be retired out from under you.
 4. **Fixed, known 384 dimensions** — no bootstrap probe, no dimension guessing, `vec0(embedding float[384])` is a plain literal.
 
-Cost: **~120 MB RAM** and CPU during ingest only. Container goes ~250 MB → **~370 MB** (`mem_limit: 512m`) — still under 6% of your free RAM.
+Cost — **measured, not estimated**: the model is **~350 MB resident** (node 38 MB → 69 MB after require → 348 MB after model load → 400-509 MB under load, stable). `heapUsed` is 7 MB, so it is native onnxruntime memory GC cannot reclaim. Warm init 0.25 s, ~87 ms/chunk, 128 MB on-disk cache. Container total **~600 MB** (`mem_limit: 1g`) — still under 9% of your free RAM, and still well inside Karakeep's own 2 GB recommendation.
 
 > The `EmbeddingProvider` interface keeps the OpenRouter path (`nvidia/nemotron-3-embed-1b:free`) as a one-line alternative for anyone who'd rather trade quota for RAM. It is not the default, and switching requires a deliberate `pnpm reembed`.
 
@@ -202,7 +202,7 @@ flowchart TB
 
     EXT & PWA & WEB & IMP --> API["/api/v1/capture"]
 
-    subgraph one["Single Next.js process (~370 MB)"]
+    subgraph one["Single Next.js process (~600 MB)"]
       API --> DB[(SQLite · WAL<br/>FTS5 + vec0 + jobs)]
       DB <--> W[In-process worker loop<br/>concurrency 2]
       W --> P1[resolve] --> P2[extract] --> P3[enrich] --> P4[embed] --> P5[relate] --> P6[index]
@@ -388,7 +388,7 @@ Effort: **S** ≈ 30 min · **M** ≈ 1 h · **L** ≈ 2 h
 |---|---|---|---|
 | 1.1.1 | Next.js 16 + TS + Tailwind v4, pnpm, strict tsconfig | `pnpm dev` serves a page | S |
 | 1.1.2 | ESLint + Prettier + `pnpm check`; Vitest + one passing test | Both green on an empty repo | S |
-| 1.1.3 | Single-stage `docker-compose.yml`, `mem_limit: 512m`, DB bind-mounted at `./data/` | `docker stats` < 400 MB idle; DB survives `compose down/up` | M |
+| 1.1.3 | Single-stage `docker-compose.yml`, `mem_limit: 1g`, DB bind-mounted at `./data/` | `docker stats` < 700 MB idle; DB survives `compose down/up` | M |
 
 #### 1.2 Data & queue runtime
 | # | Feature | Acceptance criteria | Effort |
@@ -526,7 +526,7 @@ Effort: **S** ≈ 30 min · **M** ≈ 1 h · **L** ≈ 2 h
 | 6.4 | Dedicated deploy keypair + GH environment secrets | Not your personal key | S |
 | 6.5 | nginx vhost `sieve.teknikki.com` → `127.0.0.1:3060`, matching existing file style | `nginx -t` passes; no existing site affected | M |
 | 6.6 | certbot cert + auto-renew | Valid TLS | S |
-| 6.7 | `compose.prod.yml`: `mem_limit: 512m`, `restart: unless-stopped`, healthcheck | `docker stats` ≤ 400 MB idle | S |
+| 6.7 | `compose.prod.yml`: `mem_limit: 1g`, `restart: unless-stopped`, healthcheck | `docker stats` ≤ 700 MB idle | S |
 | 6.8 | Nightly `VACUUM INTO` backup to `~/backups/sieve/`, 14-day retention | Backup exists after first night; restore documented | M |
 | 6.9 | `/api/v1/health` → `{db, queue, disk, llm_quota}` | 200 with real status | S |
 | 6.10 | **Secret-scanning pre-commit hook** (gitleaks) as a backstop, in addition to CI | A staged `.env` is blocked locally, before it ever reaches a remote | S |
@@ -673,7 +673,7 @@ Effort: **S** ≈ 30 min · **M** ≈ 1 h · **L** ≈ 2 h
 | # | Feature | Acceptance criteria | Effort |
 |---|---|---|---|
 | 14.1 | Playwright e2e: capture → pipeline → search → board move | Green in CI | L |
-| 14.2 | Load test: 200-item burst | Container ≤ 512 MB peak; host swap does not grow | M |
+| 14.2 | Load test: 200-item burst | Container ≤ 1 GB peak; host swap does not grow | M |
 | 14.3 | Rate limiting + payload caps on public endpoints | `/api/v1/capture` abuse throttled | M |
 | 14.4 | Error boundaries + structured error logging | No white screens | M |
 | 14.5 | **Backup restore drill** — prove the nightly backup restores | Documented, timed, verified | M |
@@ -700,7 +700,7 @@ Effort: **S** ≈ 30 min · **M** ≈ 1 h · **L** ≈ 2 h
 | **`better-sqlite3` native build breaks in Docker** | M | Medium | Rebuild for the image arch in the Dockerfile (6.1); pinned Node version; caught by CI |
 | **Local embedding (the one CPU stage) starves request handling or the box's other 45 containers** | M | Medium | ONNX runs on a native thread pool off the JS event loop, intra-op threads capped at 2 of 6 vCPUs; ~10-30 ms per chunk, so a 20-chunk item is ~0.5 s; 14.2 load test measures host load average; `WORKER_ENABLED=false` splits the worker out as the escape hatch |
 | **SQLite write contention** | L | Low | Single user, WAL mode, `busy_timeout`; writes are short |
-| **VPS RAM hurts your other 45 containers** | **H** | Low | `mem_limit: 512m` hard cap; one container; 14.2 load test before trusting it |
+| **VPS RAM hurts your other 45 containers** | **H** | Low | `mem_limit: 1g` hard cap; one container; 14.2 load test before trusting it |
 | **Prompt injection via a scraped README, page or transcript** | M | Medium | §7.3: delimited untrusted blocks, no side-effecting tool in the enrichment call, model cannot set `status`, Zod validation regardless of source — shipped as an adversarial **test** (3.2.1b) |
 | **Secrets leak when open-sourcing** | H | Low | `gitleaks` in CI from P6; audit gate at 14.9 |
 
@@ -721,7 +721,7 @@ Effort: **S** ≈ 30 min · **M** ≈ 1 h · **L** ≈ 2 h
 8. Ask the chat about it → answer cites that item; click the citation → item detail.
 9. Import a WhatsApp export → dry-run count matches `grep -c 'http'`; confirm; progress advances; re-importing adds nothing.
 10. Push to `main` → CI green → `https://sieve.teknikki.com` serves the new build.
-11. `ssh contabo 'docker stats --no-stream'` → the Sieve container is **≤ 512 MB**, and `free -h` swap has **not** grown.
+11. `ssh contabo 'docker stats --no-stream'` → the Sieve container is **≤ 1 GB**, and `free -h` swap has **not** grown.
 12. `ssh contabo 'sudo nginx -t'` passes and every other site on the box still loads.
 
 **Standards gate (from `CLAUDE.md`):**

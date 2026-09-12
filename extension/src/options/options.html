@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Sieve — Options</title>
+    <link rel="stylesheet" href="./options.css" />
+  </head>
+  <body>
+    <main class="options">
+      <h1>Sieve extension settings</h1>
+      <p class="lede">
+        Point this extension at your own Sieve server. Both values are stored in
+        <code>chrome.storage.sync</code> and never leave your browser except as the
+        <code>Authorization</code> header on capture requests to the server below.
+      </p>
+
+      <form id="settings-form">
+        <label class="field">
+          <span class="field__label">Server URL</span>
+          <input
+            type="url"
+            id="server-url"
+            name="server-url"
+            placeholder="https://sieve.teknikki.com"
+            autocomplete="off"
+            required
+          />
+          <span class="field__hint">
+            No trailing slash needed. Use <code>http://localhost:3060</code> for local dev.
+          </span>
+        </label>
+
+        <label class="field">
+          <span class="field__label">Extension token</span>
+          <div class="token-row">
+            <input
+              type="password"
+              id="token"
+              name="token"
+              placeholder="paste EXTENSION_TOKEN from your .env"
+              autocomplete="off"
+              required
+            />
+            <button type="button" id="toggle-token" class="button button--ghost">Show</button>
+          </div>
+          <span class="field__hint">
+            Matches <code>EXTENSION_TOKEN</code> in the server's <code>.env</code>. Only valid on
+            <code>POST /api/v1/capture</code> — treat it like a password.
+          </span>
+        </label>
+
+        <div class="actions">
+          <button type="submit" id="save-button" class="button button--primary">Save</button>
+          <button type="button" id="test-button" class="button button--secondary">Test connection</button>
+        </div>
+      </form>
+
+      <p id="status" class="status" role="status" aria-live="polite" hidden></p>
+    </main>
+    <script type="module" src="./options.ts"></script>
+  </body>
+</html>

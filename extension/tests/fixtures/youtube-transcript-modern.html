@@ -1,0 +1,39 @@
+<!--
+  Minimal reproduction of the MODERN YouTube transcript-panel structure,
+  verified live on 2026-09-12 against a real youtube.com watch page (see the
+  doc comment in src/content/youtube-transcript-assemble.ts for the full
+  story). Trimmed to just the parts assembleTranscript()/getSegmentElements()
+  /readSegment() actually read — real YouTube wraps each segment in a lot
+  more chrome (tooltips, touch-feedback ripples, etc.) that isn't relevant
+  here.
+-->
+<div id="panel-root">
+  <ytd-engagement-panel-section-list-renderer
+    target-id="PAmodern_transcript_view"
+    visibility="ENGAGEMENT_PANEL_VISIBILITY_EXPANDED"
+  >
+    <div id="body">
+      <div id="segments-container">
+        <transcript-segment-view-model class="ytwTranscriptSegmentViewModelHost">
+          <div aria-hidden="true" class="ytwTranscriptSegmentViewModelTimestamp">0:01</div>
+          <div class="ytwTranscriptSegmentViewModelTimestampA11yLabel">1 second</div>
+          <span class="ytAttributedStringHost ytAttributedStringLinkInheritColor" role="text">[♪♪♪]</span>
+        </transcript-segment-view-model>
+        <transcript-segment-view-model class="ytwTranscriptSegmentViewModelHost">
+          <div aria-hidden="true" class="ytwTranscriptSegmentViewModelTimestamp">0:18</div>
+          <div class="ytwTranscriptSegmentViewModelTimestampA11yLabel">18 seconds</div>
+          <span class="ytAttributedStringHost ytAttributedStringLinkInheritColor" role="text"
+            >♪ We're no strangers to love ♪ ♪ You know the rules and so do I ♪</span
+          >
+        </transcript-segment-view-model>
+        <transcript-segment-view-model class="ytwTranscriptSegmentViewModelHost">
+          <div aria-hidden="true" class="ytwTranscriptSegmentViewModelTimestamp">3:23</div>
+          <div class="ytwTranscriptSegmentViewModelTimestampA11yLabel">3 minutes, 23 seconds</div>
+          <span class="ytAttributedStringHost ytAttributedStringLinkInheritColor" role="text"
+            >♪ Never gonna make you cry ♪ ♪ Never gonna say goodbye ♪</span
+          >
+        </transcript-segment-view-model>
+      </div>
+    </div>
+  </ytd-engagement-panel-section-list-renderer>
+</div>

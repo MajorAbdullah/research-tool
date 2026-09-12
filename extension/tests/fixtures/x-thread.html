@@ -1,0 +1,33 @@
+<!--
+  Reproduction of x.com's current (verified live 2026-09-12) post structure:
+  plain <article> elements, no data-testid anywhere (confirmed absent site-
+  wide, not just unused — see the file header in src/content/x-thread.ts),
+  each post identified by the numeric id in its own permalink
+  (`a[href*="/status/<id>"]`).
+
+  Posts are deliberately OUT OF DOM ORDER here (post 3 renders before post 1
+  in the document, and post 2 is duplicated — X sometimes re-renders a quoted
+  or already-seen post further down the timeline) to exercise
+  orderThreadPosts()'s sort-by-id + dedup behavior, not just DOM order.
+-->
+<main>
+  <article data-fixture-label="third">
+    <a href="/openai/status/1953405076756570223">view</a>
+    <span class="font-chirp">Third post in the thread, but rendered first in the DOM.</span>
+  </article>
+  <article data-fixture-label="first">
+    <a href="/openai/status/1953405076756570221">view</a>
+    <span class="font-chirp">First post in the thread.</span>
+  </article>
+  <article data-fixture-label="second-duplicate">
+    <a href="/openai/status/1953405076756570222">view</a>
+    <span class="font-chirp">Second post, appears twice in the DOM (quoted further down).</span>
+  </article>
+  <article data-fixture-label="second">
+    <a href="/openai/status/1953405076756570222">view</a>
+    <span class="font-chirp">Second post in the thread.</span>
+  </article>
+  <article data-fixture-label="not-a-post">
+    <span class="font-chirp">A promoted/ad card with no status permalink — must be ignored.</span>
+  </article>
+</main>
