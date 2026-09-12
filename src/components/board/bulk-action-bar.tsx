@@ -58,7 +58,11 @@ export function BulkActionBar({ selectedItems, onClear }: BulkActionBarProps) {
 
   return (
     <div
-      className="fixed inset-x-4 bottom-[calc(4rem+0.5rem)] z-30 mx-auto flex max-w-2xl flex-wrap items-center gap-2 rounded-lg border border-border bg-card p-3 shadow-lg md:right-4 md:bottom-4 md:left-auto md:mx-0"
+      // `bottom-[calc(4rem+0.5rem)]` clears `BottomNav` (`src/components/common/bottom-nav.tsx`),
+      // which — verified live — renders at 51px tall at EVERY viewport width in the current app
+      // shell, not just mobile (there's no `md:hidden` on it), so this offset is deliberately not
+      // narrowed at `md:` the way the horizontal placement is.
+      className="fixed inset-x-4 bottom-[calc(4rem+0.5rem)] z-30 mx-auto flex max-w-2xl flex-wrap items-center gap-2 rounded-lg border border-border bg-card p-3 shadow-lg md:right-4 md:left-auto md:mx-0"
       role="toolbar"
       aria-label="Bulk actions"
     >
