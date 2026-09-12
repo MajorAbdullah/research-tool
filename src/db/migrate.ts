@@ -11,6 +11,11 @@
  *
  * Must run before the worker loop starts (see `instrumentation.ts`) — the worker's first claim
  * query would otherwise hit "no such table: jobs".
+ *
+ * Whatever connection you pass in must already have the sqlite-vec extension loaded (see
+ * `src/db/client.ts`'s `getSqlite()`) — the migration's `chunk_vec` table is `CREATE VIRTUAL
+ * TABLE ... USING vec0(...)`, and without the extension loaded first that fails with "no such
+ * module: vec0" rather than anything obviously pointing at a missing `loadExtension` call.
  */
 
 import fs from 'node:fs'
