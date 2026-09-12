@@ -45,6 +45,9 @@ export async function runLadder(
     try {
       const result = await rung.run()
       if (result) return { ...result, extractionTier: rung.tier }
+      logger.warn(`extraction rung "${rung.name}" produced no result, trying the next rung`, {
+        tier: rung.tier,
+      })
     } catch (err) {
       logger.warn(`extraction rung "${rung.name}" failed, trying the next rung`, {
         tier: rung.tier,

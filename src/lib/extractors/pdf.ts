@@ -111,7 +111,14 @@ export class PdfExtractor implements Extractor {
 
     const parser = new PDFParse({ data: res.body })
     try {
-      const [info, text] = await Promise.all([parser.getInfo(), parser.getText()])
+      // Deliberately sequential, not `Promise.all([parser.getInfo(), parser.getText()])`: pdf.js
+      // hands the document's bytes across a (fake, in-process-worker) transport that transfers
+      // them on first use. Two concurrent calls on the same `PDFParse` instance race to transfer
+      // the same underlying buffer and the loser fails with "Cannot transfer object of
+      // unsupported type" — reproduced directly against this exact fixture. One call at a time
+      // on one parser instance is the actual constraint, not a stylistic preference.
+      const info = await parser.getInfo()
+      const text = await parser.getText()
       if (!text.text.trim()) {
         throw new ExtractionError('invalid_pdf', `PDF at ${url} contained no extractable text`, {
           retryable: false,

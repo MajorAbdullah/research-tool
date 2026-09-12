@@ -26,7 +26,12 @@ import { type HttpClient, createHttpClient } from './http'
 import { type Rung, runLadder } from './ladder'
 import { capText } from './text'
 
-const MIN_ARTICLE_CHARS = 200
+// A real article body is comfortably 4 figures of characters (our own fixtures run ~1500-2000).
+// A Cloudflare/bot-check interstitial's actual text ("Checking if the site connection is
+// secure... Enable JavaScript and cookies to continue... Ray ID: ...") still measures a couple
+// hundred characters — real, but not an article — so the threshold needs enough headroom to
+// separate the two, not just to rule out an empty/near-empty page.
+const MIN_ARTICLE_CHARS = 400
 const SERVER_FETCH_TIMEOUT_MS = 10_000
 const BROWSER_LIKE_HEADERS: Record<string, string> = {
   'user-agent':
