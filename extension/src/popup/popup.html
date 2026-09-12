@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Save to Sieve</title>
+    <link rel="stylesheet" href="./popup.css" />
+  </head>
+  <body>
+    <main class="popup">
+      <header class="popup__header">
+        <h1 class="popup__title">Save to Sieve</h1>
+      </header>
+
+      <p class="popup__page-title" id="page-title">Loading current tab…</p>
+
+      <form id="save-form">
+        <label class="field">
+          <span class="field__label">Topic hint (optional)</span>
+          <input
+            type="text"
+            id="topic-hint"
+            name="topic-hint"
+            placeholder="e.g. agentic RAG evals"
+            autocomplete="off"
+          />
+        </label>
+
+        <label class="field">
+          <span class="field__label">Note (optional)</span>
+          <textarea id="note" name="note" rows="3" placeholder="Anything worth remembering about this"></textarea>
+        </label>
+
+        <button type="submit" id="save-button" class="button button--primary">Save to Sieve</button>
+      </form>
+
+      <p id="status" class="status" role="status" aria-live="polite" hidden></p>
+
+      <footer class="popup__footer">
+        <button type="button" id="open-options" class="button button--link">Options</button>
+      </footer>
+    </main>
+    <script type="module" src="./popup.ts"></script>
+  </body>
+</html>
