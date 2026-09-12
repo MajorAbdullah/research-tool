@@ -79,7 +79,7 @@ export function BoardColumn({
           <EmptyState
             icon={Inbox}
             title="Nothing here"
-            description="Drag a card in, or change its status from the card menu."
+            description="Drag a card in, or change its status from the dropdown on any card."
             className="border-none bg-transparent p-4 text-xs"
           />
         ) : (

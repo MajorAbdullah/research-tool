@@ -19,6 +19,18 @@
  * generic `{itemId, fromColumn, toColumn, toIndex}` result. It has no idea what a "status" is or
  * which columns are legal targets — `canDropOn` is injected by the caller (board-view.tsx, backed
  * by status-transitions.ts) so this engine could just as easily drive a different kanban tomorrow.
+ *
+ * IMPORTANT — registration holds a SET per key, not a single element: board-view.tsx mounts the
+ * desktop grid AND the mobile carousel at the same time (toggled purely by a `hidden md:grid` /
+ * `md:hidden` CSS pair, not a JS media query — see mobile-carousel.tsx's own comment on why), so
+ * every column key and every item id is actually registered TWICE — once by whichever instance is
+ * currently visible, once by the CSS-hidden one. A single-slot map here would let the hidden
+ * instance's registration silently overwrite the visible one's (whichever mounts/re-renders
+ * later wins), and hit-testing against a `display: none` element's collapsed
+ * `getBoundingClientRect()` (0×0, wherever it happens to sit) then never matches a real pointer
+ * coordinate — found live, while verifying this exact drag gesture with a real mouse simulation,
+ * as drags that never landed anywhere. `locate()` below filters every candidate down to the one
+ * with actual on-screen area, which is always the genuinely visible instance.
  */
 
 import {
@@ -87,20 +99,55 @@ export interface DragProviderProps {
   onDrop: (result: DragDropResult) => void
 }
 
+/** A real, laid-out box — as opposed to a `display: none` element's collapsed 0×0 rect. */
+function hasArea(rect: DOMRect): boolean {
+  return rect.width > 0 && rect.height > 0
+}
+
+function addToSetMap<K>(map: Map<K, Set<HTMLElement>>, key: K, el: HTMLElement): void {
+  const existing = map.get(key)
+  if (existing) existing.add(el)
+  else map.set(key, new Set([el]))
+}
+
+/** The visible (non-collapsed) element registered under `key`, or `undefined` if none currently is. */
+function visibleElement<K>(map: Map<K, Set<HTMLElement>>, key: K): HTMLElement | undefined {
+  const candidates = map.get(key)
+  if (!candidates) return undefined
+  for (const el of candidates) {
+    if (hasArea(el.getBoundingClientRect())) return el
+  }
+  return undefined
+}
+
 export function DragProvider({ children, canDropOn, onDrop }: DragProviderProps) {
   const [dragState, setDragState] = useState<DragState | null>(null)
-  const columnEls = useRef(new Map<BoardColumnKey, HTMLElement>())
-  const itemEls = useRef(new Map<string, HTMLElement>())
+  const columnEls = useRef(new Map<BoardColumnKey, Set<HTMLElement>>())
+  const itemEls = useRef(new Map<string, Set<HTMLElement>>())
   const columnItemIds = useRef(new Map<BoardColumnKey, readonly string[]>())
 
   const registerColumnEl = useCallback((column: BoardColumnKey, el: HTMLElement | null) => {
-    if (el) columnEls.current.set(column, el)
-    else columnEls.current.delete(column)
+    if (el) addToSetMap(columnEls.current, column, el)
+    // React calls a ref callback with `null` on unmount but doesn't hand back the element that's
+    // going away, so cleanup can't targeted-remove by identity here — the WeakRef-free approach
+    // that's actually correct given the codebase's constraints is a full prune on every register/
+    // unregister, dropping anything no longer connected to the document.
+    for (const [key, set] of columnEls.current) {
+      for (const candidate of set) {
+        if (!candidate.isConnected) set.delete(candidate)
+      }
+      if (set.size === 0) columnEls.current.delete(key)
+    }
   }, [])
 
   const registerItemEl = useCallback((itemId: string, el: HTMLElement | null) => {
-    if (el) itemEls.current.set(itemId, el)
-    else itemEls.current.delete(itemId)
+    if (el) addToSetMap(itemEls.current, itemId, el)
+    for (const [key, set] of itemEls.current) {
+      for (const candidate of set) {
+        if (!candidate.isConnected) set.delete(candidate)
+      }
+      if (set.size === 0) itemEls.current.delete(key)
+    }
   }, [])
 
   const registerColumnItemIds = useCallback((column: BoardColumnKey, ids: readonly string[]) => {
@@ -119,8 +166,9 @@ export function DragProvider({ children, canDropOn, onDrop }: DragProviderProps)
   const locate = useCallback(
     (x: number, y: number): { column: BoardColumnKey; index: number } | null => {
       let hitColumn: BoardColumnKey | null = null
-      for (const [key, el] of columnEls.current) {
-        if (pointInBox(x, y, el.getBoundingClientRect())) {
+      for (const key of columnEls.current.keys()) {
+        const el = visibleElement(columnEls.current, key)
+        if (el && pointInBox(x, y, el.getBoundingClientRect())) {
           hitColumn = key
           break
         }
@@ -130,7 +178,7 @@ export function DragProvider({ children, canDropOn, onDrop }: DragProviderProps)
       const ids = columnItemIds.current.get(hitColumn) ?? []
       const rects: RectLike[] = []
       for (const id of ids) {
-        const el = itemEls.current.get(id)
+        const el = visibleElement(itemEls.current, id)
         if (!el) continue
         const rect = el.getBoundingClientRect()
         rects.push({ id, top: rect.top, height: rect.height })
