@@ -45,9 +45,7 @@ describe('createEmbedHandler', () => {
     expect(chunkRows.every((c) => c.embedding_model === FAKE_EMBEDDING_MODEL)).toBe(true)
     expect(chunkRows.map((c) => c.ord)).toEqual(chunkRows.map((_, i) => i))
 
-    const vecCount = db.$client
-      .prepare('select count(*) c from chunk_vec')
-      .get() as { c: number }
+    const vecCount = db.$client.prepare('select count(*) c from chunk_vec').get() as { c: number }
     expect(vecCount.c).toBe(chunkRows.length)
 
     expect(jobQueue.claimNext()?.name).toBe('relate')
@@ -72,7 +70,8 @@ describe('createEmbedHandler', () => {
     ).c
 
     expect(secondCount).toBe(firstCount)
-    const vecCount = (db.$client.prepare('select count(*) c from chunk_vec').get() as { c: number }).c
+    const vecCount = (db.$client.prepare('select count(*) c from chunk_vec').get() as { c: number })
+      .c
     expect(vecCount).toBe(secondCount) // no orphaned vectors left over from the first run either
   })
 
@@ -97,7 +96,9 @@ describe('createEmbedHandler', () => {
 
     await handler({ name: JobName.Embed, itemId })
 
-    const rows = db.$client.prepare('select text from chunks where item_id = ?').all(itemId) as Array<{
+    const rows = db.$client
+      .prepare('select text from chunks where item_id = ?')
+      .all(itemId) as Array<{
       text: string
     }>
     expect(rows).toHaveLength(1)

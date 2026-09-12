@@ -59,11 +59,11 @@ describe('createResolveHandler', () => {
     // the synthetic `hash-<id>` tests/helpers/factories.ts's makeItem() uses for unrelated tests.
     await handler({ name: JobName.Resolve, url: 'https://example.com/post', surface: 'web' })
     const itemId = (jobQueue.claimNext()?.payload as { itemId: number }).itemId
-    db.$client
-      .prepare("update items set extraction_tier = 'full' where id = ?")
-      .run(itemId)
+    db.$client.prepare("update items set extraction_tier = 'full' where id = ?").run(itemId)
     const before = (
-      db.$client.prepare('select updated_at as u from items where id = ?').get(itemId) as { u: number }
+      db.$client.prepare('select updated_at as u from items where id = ?').get(itemId) as {
+        u: number
+      }
     ).u
 
     await new Promise((r) => setTimeout(r, 5))
@@ -72,7 +72,9 @@ describe('createResolveHandler', () => {
     const rows = db.$client.prepare('select * from items').all()
     expect(rows).toHaveLength(1)
     const after = (
-      db.$client.prepare('select updated_at as u from items where id = ?').get(itemId) as { u: number }
+      db.$client.prepare('select updated_at as u from items where id = ?').get(itemId) as {
+        u: number
+      }
     ).u
     expect(after).toBeGreaterThan(before)
     expect(jobQueue.claimNext()).toBeNull()
@@ -81,9 +83,7 @@ describe('createResolveHandler', () => {
   it('a duplicate arriving with a fresh hint re-enqueues extract when not already full tier', async () => {
     await handler({ name: JobName.Resolve, url: 'https://example.com/video', surface: 'web' })
     const itemId = (jobQueue.claimNext()?.payload as { itemId: number }).itemId
-    db.$client
-      .prepare("update items set extraction_tier = 'partial' where id = ?")
-      .run(itemId)
+    db.$client.prepare("update items set extraction_tier = 'partial' where id = ?").run(itemId)
 
     await handler({
       name: JobName.Resolve,
@@ -104,9 +104,7 @@ describe('createResolveHandler', () => {
   it('a duplicate arriving with a fresh hint does NOT re-enqueue extract once already full tier', async () => {
     await handler({ name: JobName.Resolve, url: 'https://example.com/video2', surface: 'web' })
     const itemId = (jobQueue.claimNext()?.payload as { itemId: number }).itemId
-    db.$client
-      .prepare("update items set extraction_tier = 'full' where id = ?")
-      .run(itemId)
+    db.$client.prepare("update items set extraction_tier = 'full' where id = ?").run(itemId)
 
     await handler({
       name: JobName.Resolve,

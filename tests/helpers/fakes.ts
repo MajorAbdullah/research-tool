@@ -67,7 +67,13 @@ export function createFakeLlmProvider(options: FakeLlmProviderOptions): LLMProvi
   return {
     async complete(messages: LLMMessage[], _options?: LLMCallOptions): Promise<LLMCompletion> {
       const text = options.complete ? options.complete(messages) : ''
-      return { text, modelRequested: 'fake-model', modelResolved: 'fake-model', promptTokens: 0, completionTokens: 0 }
+      return {
+        text,
+        modelRequested: 'fake-model',
+        modelResolved: 'fake-model',
+        promptTokens: 0,
+        completionTokens: 0,
+      }
     },
     async structured<T>(
       messages: LLMMessage[],

@@ -142,8 +142,8 @@ describe('createExtractHandler', () => {
 
   it('throws (never silently no-ops) when the item row does not exist', async () => {
     const handler = createExtractHandler({ db, jobQueue, extractors: [] })
-    await expect(
-      handler({ name: JobName.Extract, itemId: 999_999 }),
-    ).rejects.toThrow(/no item with id/)
+    await expect(handler({ name: JobName.Extract, itemId: 999_999 })).rejects.toThrow(
+      /no item with id/,
+    )
   })
 })

@@ -58,7 +58,12 @@ export function createTopic(db: DbClient, userId: number, label: string): TopicR
  * assignment — `EnrichmentResult.topic` is singular, so an item has at most one topic at a time;
  * a re-enrich reassigns rather than accumulates.
  */
-export function setItemTopic(db: DbClient, itemId: number, topicId: number, confidence: number): void {
+export function setItemTopic(
+  db: DbClient,
+  itemId: number,
+  topicId: number,
+  confidence: number,
+): void {
   db.delete(itemTopics).where(eq(itemTopics.itemId, itemId)).run()
   db.insert(itemTopics).values({ itemId, topicId, confidence }).run()
 }

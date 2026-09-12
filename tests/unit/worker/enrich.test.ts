@@ -98,9 +98,10 @@ describe('createEnrichHandler', () => {
     expect(item?.status).not.toBe('failed')
     expect(item?.failureReason).toBeNull()
 
-    const requeued = db.$client
-      .prepare(`select * from jobs where name = 'enrich'`)
-      .all() as Array<{ state: string; run_at: number }>
+    const requeued = db.$client.prepare(`select * from jobs where name = 'enrich'`).all() as Array<{
+      state: string
+      run_at: number
+    }>
     expect(requeued).toHaveLength(1)
     expect(requeued[0]?.state).toBe('queued')
     expect(requeued[0]?.run_at).toBe(resetAt)

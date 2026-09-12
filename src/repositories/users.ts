@@ -19,7 +19,9 @@ import type { DbClient } from '@/db/client'
 export function getSoleUserId(db: DbClient): number {
   const row = db.select({ id: users.id }).from(users).orderBy(asc(users.id)).limit(1).get()
   if (!row) {
-    throw new Error('getSoleUserId: no user exists — run `pnpm seed:user` before starting the worker')
+    throw new Error(
+      'getSoleUserId: no user exists — run `pnpm seed:user` before starting the worker',
+    )
   }
   return row.id
 }

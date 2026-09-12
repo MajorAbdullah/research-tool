@@ -49,7 +49,10 @@ export interface FindNearestItemsParams {
  * belonging to `excludeItemId`, de-duplicated to one (best-distance) row per neighbouring item,
  * closest first.
  */
-export function findNearestItemsByVector(db: DbClient, params: FindNearestItemsParams): ChunkNeighbor[] {
+export function findNearestItemsByVector(
+  db: DbClient,
+  params: FindNearestItemsParams,
+): ChunkNeighbor[] {
   const fetchK = params.fetchK ?? Math.max(params.topN * 4, 20)
   const rows = db.$client
     .prepare<[number, number, Float32Array, number, number], RawNeighborRow>(
@@ -92,7 +95,8 @@ export interface NewRelationInput {
  * idempotently re-runnable, same as every other stage.
  */
 export function insertRelationIfAbsent(db: DbClient, input: NewRelationInput): void {
-  const [itemA, itemB] = input.itemA < input.itemB ? [input.itemA, input.itemB] : [input.itemB, input.itemA]
+  const [itemA, itemB] =
+    input.itemA < input.itemB ? [input.itemA, input.itemB] : [input.itemB, input.itemA]
   db.insert(relationsTable)
     .values({ itemA, itemB, type: input.type, score: input.score, rationale: input.rationale })
     .onConflictDoNothing()

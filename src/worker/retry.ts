@@ -72,7 +72,11 @@ function hasPendingJob(db: DbClient, stage: JobName, itemId: number): boolean {
   return row !== undefined
 }
 
-export function retryItemFromStage(db: DbClient, jobQueue: JobQueue, params: RetryParams): RetryOutcome {
+export function retryItemFromStage(
+  db: DbClient,
+  jobQueue: JobQueue,
+  params: RetryParams,
+): RetryOutcome {
   if (!isRetryableStage(params.stage)) {
     return { ok: false, reason: 'invalid_stage' }
   }

@@ -27,7 +27,11 @@ export interface NewItemInput {
   note?: string
 }
 
-export function findItemByUrlHash(db: DbClient, userId: number, urlHash: string): ItemRow | undefined {
+export function findItemByUrlHash(
+  db: DbClient,
+  userId: number,
+  urlHash: string,
+): ItemRow | undefined {
   return db
     .select()
     .from(items)
