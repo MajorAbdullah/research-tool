@@ -1,35 +1,41 @@
-<!doctype html>
-<html lang="en">
-<head><meta charset="utf-8" /><title>(1) sieve.build on X</title></head>
-<body>
-  <main>
-    <section data-testid="primaryColumn">
-      <article data-testid="tweet">
-        <div data-testid="User-Name"><a href="/sieve_build">sieve.build</a></div>
-        <div data-testid="tweetText">1/ We kept losing YouTube videos to "title never mentions the topic." Here's the extraction ladder we shipped to fix it.</div>
-      </article>
-      <article data-testid="tweet">
-        <div data-testid="tweetText">2/ The server runs on a datacenter IP. YouTube, Instagram and X all treat that as a bot after a few hundred requests.</div>
-      </article>
-      <article data-testid="tweet">
-        <div data-testid="tweetText">3/ So the browser extension captures content client-side, on your own residential IP, already logged in.</div>
-      </article>
-      <article data-testid="tweet">
-        <div data-testid="tweetText">4/ It grabs the rendered transcript panel, the DOM, the caption — whatever the site would show a real logged-in user.</div>
-      </article>
-      <article data-testid="tweet">
-        <div data-testid="tweetText">5/ That gets POSTed to the server alongside the URL. No proxies, no stored cookies, no arms race.</div>
-      </article>
-      <article data-testid="tweet">
-        <div data-testid="tweetText">6/ Server-side fallbacks still exist for when there's no extension capture — oEmbed, timedtext, OG tags.</div>
-      </article>
-      <article data-testid="tweet">
-        <div data-testid="tweetText">7/ Every one of those fallbacks is allowed to fail. What's not allowed is failing silently.</div>
-      </article>
-      <article data-testid="tweet">
-        <div data-testid="tweetText">8/ Every item records which rung of the ladder actually succeeded, and the UI shows it. Degradation is visible, always.</div>
-      </article>
-    </section>
-  </main>
-</body>
-</html>
+<!--
+  hint.html for an x.com/twitter.com capture is NOT a raw page — it's the output of the
+  extension's own thread walker (extension/src/content/x-thread.ts, verified live against x.com on
+  2026-09-12), which already selected only real posts (a plain <article> with a /status/<id>
+  permalink — no data-testid attributes exist on the live site), deduped repeats, and sorted them
+  into conversation order by numeric Snowflake id. So this fixture is exactly that: 8 already-
+  ordered <article> outerHTML fragments joined by newlines, matching walkXThread()'s real output
+  shape, not a full page.
+-->
+<article>
+  <a href="/sieve_build/status/1953405076756570301">view</a>
+  <span class="font-chirp">1/ We kept losing YouTube videos to "title never mentions the topic." Here's the extraction ladder we shipped to fix it.</span>
+</article>
+<article>
+  <a href="/sieve_build/status/1953405076756570302">view</a>
+  <span class="font-chirp">2/ The server runs on a datacenter IP. YouTube, Instagram and X all treat that as a bot after a few hundred requests.</span>
+</article>
+<article>
+  <a href="/sieve_build/status/1953405076756570303">view</a>
+  <span class="font-chirp">3/ So the browser extension captures content client-side, on your own residential IP, already logged in.</span>
+</article>
+<article>
+  <a href="/sieve_build/status/1953405076756570304">view</a>
+  <span class="font-chirp">4/ It grabs the rendered transcript panel, the DOM, the caption — whatever the site would show a real logged-in user.</span>
+</article>
+<article>
+  <a href="/sieve_build/status/1953405076756570305">view</a>
+  <span class="font-chirp">5/ That gets POSTed to the server alongside the URL. No proxies, no stored cookies, no arms race.</span>
+</article>
+<article>
+  <a href="/sieve_build/status/1953405076756570306">view</a>
+  <span class="font-chirp">6/ Server-side fallbacks still exist for when there's no extension capture — oEmbed, timedtext, OG tags.</span>
+</article>
+<article>
+  <a href="/sieve_build/status/1953405076756570307">view</a>
+  <span class="font-chirp">7/ Every one of those fallbacks is allowed to fail. What's not allowed is failing silently.</span>
+</article>
+<article>
+  <a href="/sieve_build/status/1953405076756570308">view</a>
+  <span class="font-chirp">8/ Every item records which rung of the ladder actually succeeded, and the UI shows it. Degradation is visible, always.</span>
+</article>
