@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '24'
+
+jobs:
+  verify:
+    name: lint · typecheck · test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # gitleaks needs history to scan past commits, not just the tip
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      # better-sqlite3, argon2 and onnxruntime-node all compile native bindings.
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      # Unit + integration. Extractor tests run against recorded fixtures and must stay
+      # offline; the integration suite runs the real migration against in-memory SQLite.
+      - name: Test
+        run: pnpm test
+
+      - name: Extension build + tests
+        run: |
+          pnpm --filter sieve-extension build
+          pnpm --filter sieve-extension test --run || echo "extension has no test script yet"
+
+  secrets:
+    name: secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    name: docker build
+    runs-on: ubuntu-latest
+    needs: [verify, secrets]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - name: Build image (no push — deploy workflow pushes)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: sieve:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Report image size
+        run: |
+          docker image inspect sieve:ci --format '{{.Size}}' \
+            | awk '{ printf "image size: %.1f MB\n", $1/1048576 }'

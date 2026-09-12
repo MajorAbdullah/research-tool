@@ -4,3 +4,7 @@ extension/dist
 pnpm-lock.yaml
 drizzle/*.sql
 data
+
+# Markdown is prose, and some of it (Best Practices/) is authored by hand.
+# Prettier's table-padding and reflow churns hundreds of lines for zero benefit.
+*.md

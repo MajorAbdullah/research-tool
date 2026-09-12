@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Local backstop against committing secrets. CI runs gitleaks too, but a secret that
+# reaches a remote is already a secret you have to rotate — so block it here first.
+set -euo pipefail
+
+staged=$(git diff --cached --name-only --diff-filter=ACM)
+[ -z "$staged" ] && exit 0
+
+# 1. never commit a real .env
+if echo "$staged" | grep -qE '(^|/)\.env$|(^|/)\.env\.(local|production)$'; then
+  echo "pre-commit: refusing to commit a real .env file. Use .env.example instead." >&2
+  exit 1
+fi
+
+# 2. obvious credential shapes in staged content
+if git diff --cached -U0 | grep -nE '^\+.*(sk-or-v1-[A-Za-z0-9]{20,}|gh[pousr]_[A-Za-z0-9]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)' >/dev/null; then
+  echo "pre-commit: a staged line looks like a live credential (OpenRouter key, GitHub PAT," >&2
+  echo "            or a private key). Remove it, or use an env var." >&2
+  exit 1
+fi
+
+# 3. gitleaks if available locally
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks protect --staged --redact --no-banner || {
+    echo "pre-commit: gitleaks flagged the staged changes." >&2; exit 1; }
+fi
