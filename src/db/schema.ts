@@ -272,3 +272,83 @@ export const settings = sqliteTable('settings', {
   key: text('key').primaryKey(),
   value: text('value').notNull(),
 })
+
+// ---------------------------------------------------------------------------
+// P13 — Ask-My-Library Chat. Three additive tables, owned by src/lib/rag/**:
+//   conversations   — one row per chat thread (docs/API.md §3.8's `conversation_id`)
+//   chat_messages   — every turn, both roles; assistant rows also carry the sources/grounded
+//                      flag/retrieved-chunk log needed to render history and to diagnose a bad
+//                      answer as retrieval-vs-generation without guessing (CLAUDE.md → RAG,
+//                      "log retrieved chunks with every answer")
+//   chat_cache      — exact-match response cache keyed on question+scope (P13.9): a repeated
+//                      question costs zero free-tier requests
+//
+// JSON columns here are intentionally loose (`unknown`), not typed against src/lib/rag/*'s own
+// shapes — same reasoning as `items.kindFields` above: this is the lowest layer every phase
+// depends on, so it must never depend back on one phase's own types. src/lib/rag/** validates
+// what it reads/writes.
+// ---------------------------------------------------------------------------
+
+export const conversations = sqliteTable(
+  'conversations',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    // First user message, truncated — a human-readable label for a future history list. Set once
+    // at creation, never edited.
+    title: text('title'),
+    createdAt: integer('created_at').notNull().default(nowMs),
+    updatedAt: integer('updated_at').notNull().default(nowMs),
+  },
+  (table) => [index('conversations_user_updated_idx').on(table.userId, table.updatedAt)],
+)
+
+export const chatMessages = sqliteTable(
+  'chat_messages',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    conversationId: integer('conversation_id')
+      .notNull()
+      .references(() => conversations.id, { onDelete: 'cascade' }),
+    // Denormalized (not just derivable via conversationId join), same rationale as
+    // `chunks.userId` above: every query touching this table is scoped by user_id directly.
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    role: text('role').notNull().$type<'user' | 'assistant'>(),
+    content: text('content').notNull(),
+    // The numbered reference list this message cited (docs/API.md §3.8's `sources` event) — null
+    // on a `user` row.
+    sources: text('sources', { mode: 'json' }).$type<unknown[] | null>(),
+    // null on a `user` row; `false` marks the "I have nothing saved about that" path (P13.5).
+    grounded: integer('grounded', { mode: 'boolean' }),
+    // Every candidate chunk retrieval considered for this turn, win or lose — null on a `user`
+    // row. This is the "diagnosable as retrieval-vs-generation without guessing" log (P13.8).
+    retrievedChunks: text('retrieved_chunks', { mode: 'json' }).$type<unknown[] | null>(),
+    createdAt: integer('created_at').notNull().default(nowMs),
+  },
+  (table) => [
+    index('chat_messages_conversation_idx').on(table.conversationId, table.id),
+    check('chat_messages_role_check', sql`${table.role} in ('user','assistant')`),
+  ],
+)
+
+export const chatCache = sqliteTable(
+  'chat_cache',
+  {
+    // sha256(userId + normalized question + filter scope) — see src/lib/rag/cache.ts. Exact-match
+    // only, deliberately: no fuzzy/semantic cache key, so a hit is always provably the same
+    // question under the same scope (P13.9).
+    cacheKey: text('cache_key').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    answer: text('answer').notNull(),
+    sources: text('sources', { mode: 'json' }).notNull().$type<unknown[]>(),
+    grounded: integer('grounded', { mode: 'boolean' }).notNull(),
+    createdAt: integer('created_at').notNull().default(nowMs),
+  },
+  (table) => [index('chat_cache_user_idx').on(table.userId)],
+)

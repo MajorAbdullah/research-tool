@@ -350,3 +350,53 @@ CREATE VIRTUAL TABLE IF NOT EXISTS `chunk_vec` USING vec0(
 CREATE TRIGGER IF NOT EXISTS `chunks_vec_ad` AFTER DELETE ON `chunks` BEGIN
 	DELETE FROM chunk_vec WHERE rowid = old.id;
 END;
+--> statement-breakpoint
+
+-- ============================================================================
+-- P13 — Ask-My-Library Chat (conversations, chat_messages, chat_cache). Additive, hand-appended
+-- to this same file per migrate.ts's header: there is no drizzle/meta journal here, so a fresh
+-- numbered migration file would never actually run — every statement below follows the same
+-- `IF NOT EXISTS` idempotency rule as the rest of this file. See src/db/schema.ts for the typed
+-- Drizzle definitions these mirror.
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS `conversations` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`user_id` integer NOT NULL,
+	`title` text,
+	`created_at` integer DEFAULT (cast(unixepoch('subsec') * 1000 as integer)) NOT NULL,
+	`updated_at` integer DEFAULT (cast(unixepoch('subsec') * 1000 as integer)) NOT NULL,
+	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `conversations_user_updated_idx` ON `conversations` (`user_id`,`updated_at`);
+--> statement-breakpoint
+
+CREATE TABLE IF NOT EXISTS `chat_messages` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`conversation_id` integer NOT NULL,
+	`user_id` integer NOT NULL,
+	`role` text NOT NULL,
+	`content` text NOT NULL,
+	`sources` text,
+	`grounded` integer,
+	`retrieved_chunks` text,
+	`created_at` integer DEFAULT (cast(unixepoch('subsec') * 1000 as integer)) NOT NULL,
+	FOREIGN KEY (`conversation_id`) REFERENCES `conversations`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade,
+	CONSTRAINT "chat_messages_role_check" CHECK("chat_messages"."role" in ('user','assistant'))
+);
+--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `chat_messages_conversation_idx` ON `chat_messages` (`conversation_id`,`id`);
+--> statement-breakpoint
+
+CREATE TABLE IF NOT EXISTS `chat_cache` (
+	`cache_key` text PRIMARY KEY NOT NULL,
+	`user_id` integer NOT NULL,
+	`answer` text NOT NULL,
+	`sources` text NOT NULL,
+	`grounded` integer NOT NULL,
+	`created_at` integer DEFAULT (cast(unixepoch('subsec') * 1000 as integer)) NOT NULL,
+	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `chat_cache_user_idx` ON `chat_cache` (`user_id`);
