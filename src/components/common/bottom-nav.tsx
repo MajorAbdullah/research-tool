@@ -20,7 +20,10 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Primary"
-      className="fixed inset-x-0 bottom-0 z-40 flex border-t border-border bg-card"
+      // `md:hidden` is load-bearing: this is a `fixed` element, so without it the mobile bar
+      // renders on top of the desktop sidebar at every width. The layout already pairs it with
+      // `main`'s `pb-20 md:pb-0`, which assumed this bar was gone at md+.
+      className="fixed inset-x-0 bottom-0 z-40 flex border-t border-border bg-card md:hidden"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       {NAV_ITEMS.map((item) => {

@@ -42,3 +42,8 @@ test-results/
 
 # playwright-mcp session artifacts
 .playwright-mcp/
+
+# screenshots from browser-driven verification (agents + local runs)
+*.png
+!extension/public/icons/*.png
+!public/icons/*.png
