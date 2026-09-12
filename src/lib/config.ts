@@ -81,7 +81,13 @@ const EnvSchema = z
       .min(16, 'EXTENSION_TOKEN must be at least 16 characters — generate one with `openssl rand -hex 32`'),
 
     // --- GitHub extraction (optional — falls back toward metadata_only without it) ---
-    GITHUB_PAT: z.string().min(1).optional(),
+    // `.env.example` ships this as `GITHUB_PAT=` (present, blank) when unset — that must parse
+    // the same as the variable being absent entirely, not fail the way a blank *required*
+    // secret does below.
+    GITHUB_PAT: z
+      .string()
+      .optional()
+      .transform((value) => (value === undefined || value.trim() === '' ? undefined : value)),
 
     // --- LLM / OpenRouter ---
     OPENROUTER_API_KEY: z.string().min(1, 'OPENROUTER_API_KEY is required'),
