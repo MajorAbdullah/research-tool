@@ -31,15 +31,22 @@ It replaces the "send links to my own WhatsApp chat" habit, which piles up and r
 | ORM / migrations | **Drizzle ORM + drizzle-kit** |
 | Queue | `jobs` table + in-process poller from `instrumentation.ts` |
 | LLM | **OpenRouter, free models only**, two chains (see below) |
-| Embeddings | **Local** `fastembed` / `bge-small-en-v1.5`, 384 dims, ONNX-quantized |
+| Embeddings | **Local** `fastembed` / `bge-small-en-v1.5`, 384 dims, ONNX-quantized — **~350 MB resident, measured** |
 | Auth | Auth.js — credentials + passkey, single seeded user |
 | UI | Tailwind v4 + shadcn/ui + TanStack Query |
 | Extension | Manifest V3, vanilla TS + Vite |
 | Deploy | Docker Compose → one container on Contabo, GHCR image, host nginx vhost |
 | Testing | Vitest (unit) + Playwright (e2e smoke) |
 
-**Scale reality:** one user, one container, `mem_limit: 512m`, sharing a 6-vCPU box with ~45 other
-containers. Every design choice is bounded by being a good neighbour on that box.
+**Scale reality:** one user, one container, **`mem_limit: 1g`** (measured ~550-650 MB steady), sharing
+a 6-vCPU box with ~45 other containers and 7.1 GB free. Every design choice is bounded by being a
+good neighbour on that box.
+
+> **The embedding model dominates the memory budget.** Measured: node baseline 38 MB -> 69 MB after
+> `require('fastembed')` -> **348 MB once the model loads** -> 400-509 MB under embedding load, stable
+> (no leak across 120 chunks). `heapUsed` is only 7 MB, so ~390 MB is native onnxruntime arena that
+> **GC cannot reclaim**. Warm init from the on-disk cache is 0.25 s; throughput ~87 ms/chunk.
+> An early estimate of "~120 MB" was wrong by ~3x — see ADR 0003.
 
 ---
 
@@ -245,3 +252,13 @@ Each bullet set is the high-signal subset. Open the linked doc for the complete 
 - Use the secret-scanning pre-commit hook; `gitleaks` also runs in CI. Nothing goes public until history is clean.
 - Keep ADRs in `docs/adr/`, versioned and reviewed like code.
 - Update this file when a stack choice or deviation changes. It is loaded into every session — stale content here misleads every future agent.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

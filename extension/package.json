@@ -1,0 +1,21 @@
+{
+  "name": "sieve-extension",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sieve browser extension — the client-side extraction engine (see docs/adr/0006). MV3, vanilla TypeScript + Vite.",
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/chrome": "0.1.13",
+    "jsdom": "30.0.1",
+    "typescript": "7.0.2",
+    "vite": "7.1.12",
+    "vitest": "5.0.0"
+  }
+}
