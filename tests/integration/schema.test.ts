@@ -71,6 +71,47 @@ describe('schema + migration', () => {
       expect(c).toBe(0)
     })
 
+    /**
+     * Regression: removing an item's LAST tag used to leave a stale FTS entry, so a search
+     * for the just-removed tag kept returning the item. Cause: the item_tags_fts_ad trigger
+     * rebuilt the pre-delete tag string with `||`, and SQLite's `||` collapses the whole
+     * expression to NULL once group_concat returns NULL (no tags left). The 'delete' command
+     * was then handed NULL, matched nothing, and removed nothing. Fixed with COALESCE.
+     */
+    it("removes the tag from FTS when the item's LAST tag is deleted", () => {
+      const id = makeItem(db, { id: 7, title: 'Zebra Repo', tldr: 'about zebras' })
+      tagItem(db, id, 'quantization')
+      expect(
+        (
+          db
+            .prepare("select count(*) c from items_fts where items_fts match 'quantization'")
+            .get() as { c: number }
+        ).c,
+      ).toBe(1)
+
+      const tag = db.prepare("select id from tags where label = 'quantization'").get() as {
+        id: number
+      }
+      db.prepare('delete from item_tags where item_id = ? and tag_id = ?').run(id, tag.id)
+
+      // the removed tag must no longer match...
+      expect(
+        (
+          db
+            .prepare("select count(*) c from items_fts where items_fts match 'quantization'")
+            .get() as { c: number }
+        ).c,
+      ).toBe(0)
+      // ...while the item itself stays indexed on its other columns
+      expect(
+        (
+          db.prepare("select count(*) c from items_fts where items_fts match 'Zebra'").get() as {
+            c: number
+          }
+        ).c,
+      ).toBe(1)
+    })
+
     it('makes tags searchable through the synthesized view', () => {
       const id = makeItem(db, { id: 3, title: 'Some Repo' })
       tagItem(db, id, 'quantization')

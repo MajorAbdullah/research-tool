@@ -315,7 +315,12 @@ BEGIN
 	INSERT INTO items_fts(items_fts, rowid, title, tldr, tags, content)
 	SELECT
 		'delete', i.id, i.title, i.summary_tldr,
-		trim((SELECT group_concat(t.label, ' ') FROM item_tags it JOIN tags t ON t.id = it.tag_id WHERE it.item_id = i.id) || ' ' || (SELECT label FROM tags WHERE id = old.tag_id)),
+		-- COALESCE is load-bearing: SQLite's || collapses the whole expression to NULL when
+		-- group_concat returns NULL (i.e. this was the item's LAST tag). Without it the 'delete'
+		-- command is handed a NULL tags value, fails to match the row actually in the index, and
+		-- leaves a STALE entry — a search for the just-removed tag keeps returning the item.
+		-- Reproduced and pinned by tests/integration/schema.test.ts.
+		trim(COALESCE((SELECT group_concat(t.label, ' ') FROM item_tags it JOIN tags t ON t.id = it.tag_id WHERE it.item_id = i.id), '') || ' ' || COALESCE((SELECT label FROM tags WHERE id = old.tag_id), '')),
 		i.content_text
 	FROM items i WHERE i.id = old.item_id;
 	INSERT INTO items_fts(rowid, title, tldr, tags, content)
