@@ -53,6 +53,16 @@ export const registry: JobRegistry = {
   [JobName.Index]: placeholder(JobName.Index),
 }
 
+/**
+ * Installs real handlers into `registry`, replacing whichever placeholders (or previously
+ * installed handlers) currently occupy those slots (P7). `bootstrap.ts` is the only production
+ * caller — tests are free to call this too, or to assign `registry.foo` directly; `registry`
+ * stays a plain mutable object either way (see this file's own header).
+ */
+export function registerJobHandlers(handlers: Partial<JobRegistry>): void {
+  Object.assign(registry, handlers)
+}
+
 function assertNever(value: never): never {
   throw new Error(`worker: unhandled job name in dispatch: ${JSON.stringify(value)}`)
 }

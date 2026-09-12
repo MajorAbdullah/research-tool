@@ -48,6 +48,13 @@ export async function register(): Promise<void> {
     return
   }
 
+  // Constructs the shared AI/embedding dependencies and installs the six real stage handlers
+  // (P7) into the registry P1's worker loop dispatches through — must happen before
+  // `startWorkerLoop()` claims its first job, or that job would run against P1's no-op
+  // placeholders.
+  const { bootstrapPipeline } = await import('@/worker/bootstrap')
+  await bootstrapPipeline()
+
   startWorkerLoop()
   logger.info({ concurrency: 2 }, 'boot: worker loop started')
 
