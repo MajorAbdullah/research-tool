@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8" /><title>(1) sieve.build on X</title></head>
+<body>
+  <main>
+    <section data-testid="primaryColumn">
+      <article data-testid="tweet">
+        <div data-testid="User-Name"><a href="/sieve_build">sieve.build</a></div>
+        <div data-testid="tweetText">1/ We kept losing YouTube videos to "title never mentions the topic." Here's the extraction ladder we shipped to fix it.</div>
+      </article>
+      <article data-testid="tweet">
+        <div data-testid="tweetText">2/ The server runs on a datacenter IP. YouTube, Instagram and X all treat that as a bot after a few hundred requests.</div>
+      </article>
+      <article data-testid="tweet">
+        <div data-testid="tweetText">3/ So the browser extension captures content client-side, on your own residential IP, already logged in.</div>
+      </article>
+      <article data-testid="tweet">
+        <div data-testid="tweetText">4/ It grabs the rendered transcript panel, the DOM, the caption — whatever the site would show a real logged-in user.</div>
+      </article>
+      <article data-testid="tweet">
+        <div data-testid="tweetText">5/ That gets POSTed to the server alongside the URL. No proxies, no stored cookies, no arms race.</div>
+      </article>
+      <article data-testid="tweet">
+        <div data-testid="tweetText">6/ Server-side fallbacks still exist for when there's no extension capture — oEmbed, timedtext, OG tags.</div>
+      </article>
+      <article data-testid="tweet">
+        <div data-testid="tweetText">7/ Every one of those fallbacks is allowed to fail. What's not allowed is failing silently.</div>
+      </article>
+      <article data-testid="tweet">
+        <div data-testid="tweetText">8/ Every item records which rung of the ladder actually succeeded, and the UI shows it. Degradation is visible, always.</div>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Why We Moved Our Backups Off the Cloud — Signal Loss</title>
+  <meta property="og:title" content="Why We Moved Our Backups Off the Cloud" />
+  <meta property="og:description" content="A year of nightly VACUUM INTO drills, and what broke." />
+  <meta name="author" content="Priya Natarajan" />
+  <meta property="article:published_time" content="2026-03-14T09:00:00Z" />
+</head>
+<body>
+  <header><nav><a href="/">Signal Loss</a></nav></header>
+  <article>
+    <h1>Why We Moved Our Backups Off the Cloud</h1>
+    <p class="byline">By Priya Natarajan — March 14, 2026</p>
+    <p>
+      For three years we ran nightly snapshots through a managed backup provider and never once
+      tested a restore. It worked, until the week it didn't: a billing dispute silently suspended
+      the account, and forty days of backups vanished along with it. Nobody noticed until we
+      needed them.
+    </p>
+    <p>
+      That failure forced a rewrite of how we think about durability. A backup you have not
+      restored from is a theory, not a backup. So we rebuilt the whole pipeline around a single
+      rule: every backup job ends with an automated restore into a scratch directory, and the job
+      fails loudly if the restored file does not pass a checksum and a row-count sanity check
+      against the live database.
+    </p>
+    <p>
+      The mechanics are almost boring. A nightly cron job runs <code>VACUUM INTO</code> against a
+      temporary file, compresses it, copies it to two independent object stores in different
+      regions, and then immediately pulls one of those copies back down and opens it read-only to
+      confirm it is a valid SQLite file with the expected table counts. If any step fails, an alert
+      fires before the sun comes up, not three months later during an actual outage.
+    </p>
+    <p>
+      We also stopped trusting a single provider's definition of "durable." Object storage
+      guarantees are about the bytes you already wrote, not about your account still existing
+      tomorrow. Two independent providers, two independent billing relationships, and a
+      third copy on a physical disk in a drawer turned out to be cheaper than the peace of mind it
+      bought.
+    </p>
+    <p>
+      None of this is exotic. It is the same lesson every operations team learns eventually:
+      untested backups are a false sense of security, and the fix is not a better vendor, it is a
+      restore drill that runs automatically and fails the pipeline the moment it stops proving
+      anything.
+    </p>
+  </article>
+  <footer><p>&copy; 2026 Signal Loss</p></footer>
+</body>
+</html>
