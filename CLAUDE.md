@@ -121,7 +121,19 @@ These appear in every domain doc. Internalize them once; apply them to code, inf
 - **Batch embeddings and batch relation-labeling.** One request per item, not one per chunk or per pair. The free tier is **1,000 requests/day account-wide** — per-chunk calls exhaust it in 50 items.
 - **Never let extraction failure look like success.** Every item records `extraction_tier` (`full` / `partial` / `metadata_only`) and the UI shows it. Degradation is visible and re-runnable, never silent.
 - **The LLM can never set `status`.** An item cannot mark itself tested. Enforced in the Zod layer, not the prompt.
-- **Access control filters *before* the kNN**, never by discarding results after.
+- **Access control and the kNN: read this before touching vector search.** `sqlite-vec`'s
+  `WHERE embedding MATCH ? AND k=N` computes the N globally-nearest rows across **all** users
+  *first*, and only then applies a joined `WHERE c.user_id = ?`. **Measured:** with 50 foreign
+  chunks at the same distance, a genuine own-user match is invisible at k=5, k=10 and k=25 — it
+  appears only at k=60, a full scan. Foreign rows never leak at any k, so this is a **recall**
+  failure, not a security one, but a naive fixed k silently starves legitimate results.
+  `src/lib/search/vector-search.ts` widens k adaptively and has an adversarial test pinning it.
+  **The proper fix, measured and available:** declare `user_id` as a typed vec0 **metadata
+  column** (`vec0(embedding float[384], user_id integer)`) and filter inside vec0 — that is a
+  true pre-filter and finds the match at k=1. Not yet adopted because there is one user today
+  and it would require a schema migration plus changes to every insert site; it is the first
+  thing to do if a second user ever exists. Note metadata-column integers bind as **`BigInt`**,
+  same as the rowid.
 - **API routes are versioned from the first endpoint** — `/api/v1/...`.
 - **`chunk_vec` rowids must be bound as `BigInt`, not `number`.** `sqlite-vec` rejects a plain JS
   number with *"Only integers are allows for primary key values"* — verified against
