@@ -142,6 +142,12 @@ test.describe('signed in', () => {
     await page.goto('/settings')
 
     await expect(page.getByRole('heading', { name: 'Connect your devices' })).toBeVisible()
+
+    // Click the tab explicitly rather than assuming which one is open: the component defaults to
+    // the visitor's own platform, so at phone width it opens on Phone. That is the intended
+    // behaviour — an earlier version of this test failed on mobile for exactly that reason, which
+    // was the feature working, not a bug.
+    await page.getByRole('tab', { name: 'Browser' }).click()
     await expect(page.getByText('Load unpacked')).toBeVisible()
 
     // The real token must NOT be in the initial HTML — only a masked form.

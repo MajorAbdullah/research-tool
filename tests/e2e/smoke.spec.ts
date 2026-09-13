@@ -11,9 +11,12 @@ test('health endpoint reports database status', async ({ request }) => {
   expect(res.status()).toBe(200)
   const body = await res.json()
   expect(body).toHaveProperty('db')
-  // Status is driven ONLY by db — a spent LLM budget or low disk must still be 200,
-  // because a restart fixes neither and a spent budget is meant to degrade gracefully.
-  expect(body.db).toBe('ok')
+  // `db` is an object ({ status, wal_size_bytes }), not a bare string — this assertion was
+  // written against an assumed shape before the endpoint existed.
+  expect(body.db.status).toBe('ok')
+  // Status is driven ONLY by db — a spent LLM budget or low disk must still be 200, because a
+  // restart fixes neither and a spent budget is meant to degrade gracefully.
+  expect(body.status).toBe('ok')
 })
 
 test('unauthenticated request is redirected to login', async ({ page }) => {
