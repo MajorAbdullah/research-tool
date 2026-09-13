@@ -19,10 +19,14 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   projects: [
-    { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
+    // `channel: 'chromium'` runs the FULL Chromium build rather than the separate
+    // chrome-headless-shell. Two reasons: the shell is an extra download that can be missing
+    // even when Chromium itself installed fine (exactly what happened here), and the full
+    // browser is closer to what a user actually runs.
+    { name: 'desktop', use: { ...devices['Desktop Chrome'], channel: 'chromium' } },
     // The board is drag-and-drop on Android and the PWA is the phone capture path,
     // so a mobile viewport is a first-class target, not an afterthought.
-    { name: 'mobile', use: { ...devices['Pixel 7'] } },
+    { name: 'mobile', use: { ...devices['Pixel 7'], channel: 'chromium' } },
   ],
   webServer: process.env.E2E_BASE_URL
     ? undefined
