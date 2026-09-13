@@ -126,12 +126,23 @@ export function LibraryGrid({
         title="Nothing saved yet"
         description="Share a link from the extension, the Android share sheet, or paste one in to get started."
         action={
-          <a
-            href="/capture"
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground outline-none transition-colors hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-          >
-            Paste a link
-          </a>
+          // Two actions on purpose: pasting is the fastest way to see the app work, but the
+          // extension and the phone install are what make it part of a daily habit — and a new
+          // user has no reason to guess that Settings is where pairing lives.
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <a
+              href="/capture"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground outline-none transition-colors hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            >
+              Paste a link
+            </a>
+            <a
+              href="/settings#connect"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-border px-4 text-sm font-medium text-foreground outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            >
+              Set up extension &amp; phone
+            </a>
+          </div>
         }
       />
     )

@@ -117,6 +117,10 @@ Useful query params: `q`, `kind`, `topic`, `tag`, `status`, `extraction_tier`, `
 
 ### The browser extension
 
+> **The app walks you through this.** Open **Settings → Connect your devices** in Sieve — it has
+> the click-by-click steps, a **Reveal token** button, and copy buttons for both values you need.
+> The steps below are the same thing in text form.
+
 ```bash
 make build-ext
 ```
@@ -131,8 +135,14 @@ blocked by those sites, the extension's residential IP is not. See
 
 ### The phone (Android)
 
+> Also covered in **Settings → Connect your devices**, which detects you're on a phone and opens
+> on that tab.
+
 There's no app to install — it's a PWA. Open your Sieve URL in Chrome on Android → menu →
 **Install app**. "Sieve" then appears in the native share sheet from YouTube, Instagram and X.
+
+**iOS:** Safari can add Sieve to your home screen, but Apple doesn't implement Web Share Target,
+so it won't appear in the iOS share sheet. Use the extension or the paste box there.
 
 ---
 

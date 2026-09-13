@@ -5,6 +5,8 @@ import { getSqlite } from '@/db/client'
 import { loadAiConfig } from '@/lib/ai'
 import { requireSessionUserIdOrRedirect } from '@/services/auth-context'
 
+import { ConnectDevices } from './connect-devices'
+
 export const metadata = { title: 'Settings · Sieve' }
 export const dynamic = 'force-dynamic'
 
@@ -103,6 +105,11 @@ export default async function SettingsPage() {
       </p>
 
       <div className="mt-6 grid gap-4">
+        <ConnectDevices
+          appUrl={process.env.APP_URL ?? 'http://localhost:3060'}
+          hasToken={Boolean(process.env.EXTENSION_TOKEN)}
+        />
+
         <Section
           title="Daily AI budget"
           hint="OpenRouter's free tier is 1,000 requests/day, account-wide across every :free model. Ingest draws from the background share only, so it can never starve your own chat queries."
