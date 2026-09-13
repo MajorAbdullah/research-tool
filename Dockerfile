@@ -85,6 +85,11 @@ ENV AUTH_SECRET=build-time-placeholder-unused-at-runtime \
     SEED_USER_EMAIL=build@example.invalid \
     SEED_USER_PASSWORD=build-time-placeholder-unused-at-runtime
 RUN pnpm build
+# The browser extension ships INSIDE the image so Settings can serve it as a
+# download. Without this, /api/v1/extension/download 404s in production — and
+# that is precisely where it matters most, since on a VPS the machine you
+# install the extension on is not the machine the source is on.
+RUN pnpm build:ext
 
 # -----------------------------------------------------------------------------
 # prod-deps — a clean, production-only install. This is the source of truth
@@ -104,6 +109,8 @@ WORKDIR /app
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
+# Built extension, served by /api/v1/extension/download.
+COPY --from=builder /app/extension/dist ./extension/dist
 
 # Drop whatever the standalone trace happened to pick up for these specific
 # packages, then replace with the complete real directories from prod-deps.

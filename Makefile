@@ -187,7 +187,11 @@ build: ## Production build
 build-ext: ## Build the browser extension into extension/dist
 	pnpm build:ext
 	@echo ""
-	@echo "Load unpacked in Chrome/Arc: chrome://extensions → Developer mode → extension/dist"
+	@echo "Built. Two ways to install it:"
+	@echo "  • Settings → Connect your devices → Download sieve-extension.zip  (works remotely)"
+	@echo "  • chrome://extensions → Developer mode → Load unpacked → extension/dist"
+	@echo ""
+	@echo "The production image builds this too, so the download works on the VPS." 
 
 lint: ## Run eslint
 	pnpm lint

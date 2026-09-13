@@ -24,10 +24,15 @@ const root = __dirname
  *     same helper, which is fine (they run in separate JS contexts and could
  *     never share a module instance anyway).
  *
- * Vite supports exporting an array of configs from one config file — each
- * one runs as its own build pass when you run `vite build` once.
+ * These therefore run as TWO separate `vite build` invocations, chained in
+ * package.json's `build` script. An earlier version of this file exported an
+ * array of configs from one file on the assumption Vite would run each as its
+ * own pass — it does not. Vite's config loader requires a single object and
+ * fails with "config must export or return an object", which meant the
+ * extension never built at all. Order matters: the pages pass runs first and
+ * wipes dist/, the scripts pass appends to it.
  */
-const pagesConfig = defineConfig({
+export default defineConfig({
   root,
   publicDir: resolve(root, 'public'),
   build: {
@@ -41,29 +46,3 @@ const pagesConfig = defineConfig({
     },
   },
 })
-
-const scriptsConfig = defineConfig({
-  root,
-  // publicDir is only copied once — the pages pass above already did it, and
-  // wiping dist/ again here (emptyOutDir) would delete popup/options output.
-  publicDir: false,
-  build: {
-    outDir: 'dist',
-    emptyOutDir: false,
-    rollupOptions: {
-      input: {
-        background: resolve(root, 'src/background/service-worker.ts'),
-        'content-main': resolve(root, 'src/content/content-main.ts'),
-      },
-      output: {
-        format: 'iife',
-        entryFileNames: '[name].js',
-        // IIFE bundles must not be split into shared chunks; each entry
-        // brings its own copy of any shared helper it imports.
-        inlineDynamicImports: false,
-      },
-    },
-  },
-})
-
-export default defineConfig([pagesConfig, scriptsConfig])

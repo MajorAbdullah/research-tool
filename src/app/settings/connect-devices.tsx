@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useState, useSyncExternalStore } from 'react'
-import { Check, Copy, Eye, Laptop, Smartphone } from 'lucide-react'
+import { Check, Copy, Download, Eye, Laptop, Smartphone } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -168,13 +168,20 @@ export function ConnectDevices({ appUrl, hasToken }: { appUrl: string; hasToken:
 
           <ol className="mt-4 space-y-3 text-sm text-foreground">
             <Step n={1}>
-              Build it once — in the project folder, run{' '}
-              <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">make build-ext</code>{' '}
-              (or{' '}
-              <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">pnpm build:ext</code>
-              ). This creates{' '}
-              <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">extension/dist</code>
-              .
+              Download and unzip it.
+              <div className="mt-2">
+                <a
+                  href="/api/v1/extension/download"
+                  className="inline-flex min-h-11 items-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground outline-none transition-colors hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                >
+                  <Download className="size-4" aria-hidden />
+                  Download sieve-extension.zip
+                </a>
+              </div>
+              <span className="mt-2 block text-xs text-muted-foreground">
+                Unzip it somewhere you will keep — Chrome loads the extension from that folder and
+                reads it again on every browser restart, so deleting the folder uninstalls it.
+              </span>
             </Step>
             <Step n={2}>
               Open{' '}
@@ -188,9 +195,12 @@ export function ConnectDevices({ appUrl, hasToken }: { appUrl: string; hasToken:
               Turn on <strong className="font-medium">Developer mode</strong> — top-right toggle.
             </Step>
             <Step n={4}>
-              Click <strong className="font-medium">Load unpacked</strong> and select the{' '}
-              <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">extension/dist</code>{' '}
-              folder.
+              Click <strong className="font-medium">Load unpacked</strong> and select the folder you
+              unzipped.
+              <span className="mt-1 block text-xs text-muted-foreground">
+                Select the <em>folder</em>, not the .zip — Chrome cannot install an archive
+                directly.
+              </span>
             </Step>
             <Step n={5}>
               Open the extension&rsquo;s <strong className="font-medium">Options</strong> (puzzle

@@ -5,7 +5,7 @@
   "description": "Sieve browser extension — the client-side extraction engine (see docs/adr/0006). MV3, vanilla TypeScript + Vite.",
   "type": "module",
   "scripts": {
-    "build": "vite build",
+    "build": "vite build -c vite.pages.config.ts && SIEVE_ENTRY=background vite build -c vite.scripts.config.ts && SIEVE_ENTRY=content-main vite build -c vite.scripts.config.ts",
     "dev": "vite build --watch",
     "test": "vitest run",
     "test:watch": "vitest",
