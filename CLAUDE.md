@@ -201,7 +201,7 @@ an ADR. **Do not "helpfully" add them back.**
 |---|---|---|
 | Multi-tenancy, billing provider, entitlements, plans, SSO/SAML, per-tenant quotas | **Not built** | There is one tenant. `user_id` + the scoping helper give the isolation mechanism without the SaaS machinery |
 | Terraform / Pulumi IaC | **Not used** | The whole infrastructure is one nginx vhost and one compose file. `deploy/` + `compose*.yml` in git *is* the versioned IaC at this scale |
-| Zero-downtime / canary / blue-green | **Not used** | Single user; a ~5 s restart is fine. The part that matters — fast rollback to the previous GHCR tag — **is** kept |
+| Zero-downtime / canary / blue-green | **Not used** | Single user; a ~5 s restart is fine. The part that matters — fast rollback to the previous GHCR tag — **is** kept, and is now **automatic**: deploys are ungated on every push to `master`, so `deploy.sh` restores the previous image itself when the new container fails its health check. Don't remove that; nobody is watching a deploy when it breaks. See ADR 0009's amendment |
 | Microservices | **Modular monolith** | Exactly what `architecture-infra-best-practices.md` prescribes as the start |
 | "Prefer managed services" | **Self-hosted** | Self-hosting is the requirement, not an oversight |
 | Distributed tracing | **Structured logs + correlation ids** | Proportionate to one process. Metrics and logs kept |

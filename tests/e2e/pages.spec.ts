@@ -72,6 +72,61 @@ test.describe('signed out', () => {
     await page.goto('/')
     await expect(page).toHaveURL(/\/(library|login)/)
   })
+
+  /**
+   * Chrome only offers "Install app" on a page that links the manifest AND has a registered
+   * service worker. Both used to be scoped to the `(capture)` route group, so the page everyone
+   * actually opens — `/`, which redirects to `/library` — offered neither, and the app was never
+   * installable in practice. Installing is what puts Sieve in Android's share sheet, so this is
+   * the difference between the share-target feature existing and working.
+   *
+   * Asserted on a page OUTSIDE that old route group on purpose: testing `/capture` would have
+   * passed the whole time the feature was broken.
+   */
+  test('every page is installable, not just /capture', async ({ page }) => {
+    await page.goto('/login')
+
+    await expect(page.locator('link[rel="manifest"]')).toHaveAttribute(
+      'href',
+      '/manifest.webmanifest',
+    )
+    await expect(page.locator('meta[name="mobile-web-app-capable"]')).toHaveAttribute(
+      'content',
+      'yes',
+    )
+
+    // Registration is async and fire-and-forget, so poll rather than assert once.
+    await expect
+      .poll(() => page.evaluate(() => navigator.serviceWorker.getRegistration().then((r) => !!r)), {
+        timeout: 15_000,
+        message: 'service worker should register on a non-capture page',
+      })
+      .toBe(true)
+  })
+
+  test('the manifest declares a share target pointing at a real route', async ({ page }) => {
+    const res = await page.request.get('/manifest.webmanifest')
+    expect(res.status()).toBe(200)
+    const manifest = await res.json()
+
+    // start_url is where the installed icon lands. /capture (the old value) dropped you on the
+    // paste box; the library is the app.
+    expect(manifest.start_url).toBe('/library')
+    expect(manifest.id).toBe('/library')
+
+    // The share target is the entire point of installing. multipart/form-data + POST is what
+    // Android requires; the service worker must never intercept it (see public/sw.js).
+    expect(manifest.share_target).toMatchObject({
+      action: '/share',
+      method: 'POST',
+      enctype: 'multipart/form-data',
+    })
+
+    // And /share must actually exist — a share_target pointing at a 404 fails silently on the
+    // phone, which is the worst place to discover it.
+    const share = await page.request.fetch('/share', { method: 'HEAD', failOnStatusCode: false })
+    expect(share.status(), '/share should not be a 404').not.toBe(404)
+  })
 })
 
 test.describe('signed in', () => {

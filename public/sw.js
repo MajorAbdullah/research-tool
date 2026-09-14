@@ -2,14 +2,22 @@
  * Minimal service worker: just enough for Chrome's installability criteria (a registered SW with
  * a fetch handler) plus a small offline app-shell cache. Sieve's real data (items, search) always
  * needs a live network round-trip to the local SQLite-backed API — this deliberately does not try
- * to cache or serve API responses offline, only the static shell that lets `/capture` open at all
+ * to cache or serve API responses offline, only the static shell that lets the app open at all
  * without a network.
  *
- * Registered from `src/app/(capture)/register-service-worker.tsx`.
+ * Registered from `src/components/common/register-service-worker.tsx`, mounted in the ROOT
+ * layout so every page counts toward installability — see that file for why it isn't scoped to
+ * `/capture` any more.
  */
 
-const CACHE_NAME = 'sieve-shell-v1'
-const APP_SHELL = ['/capture', '/manifest.webmanifest']
+// Bump this whenever APP_SHELL changes. The activate handler deletes every cache whose key
+// isn't the current one, so a bump is what evicts a stale precache — v1 held `/capture`, which
+// is no longer the start_url.
+const CACHE_NAME = 'sieve-shell-v2'
+
+// Must stay in step with manifest.webmanifest's `start_url`: this is the page the installed
+// icon opens, so it's the one that has to survive a cold start with no network.
+const APP_SHELL = ['/library', '/manifest.webmanifest']
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -17,8 +25,9 @@ self.addEventListener('install', (event) => {
       .open(CACHE_NAME)
       .then((cache) => cache.addAll(APP_SHELL))
       .catch(() => {
-        // Best-effort precache — a single failed URL (e.g. offline during install) must not
-        // block the service worker from installing at all.
+        // Best-effort precache — a single failed URL (e.g. offline during install, or /library
+        // redirecting to /login because nobody is signed in yet) must not block the service
+        // worker from installing at all, since installing is what makes the app installable.
       }),
   )
   self.skipWaiting()

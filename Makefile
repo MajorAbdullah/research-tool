@@ -233,8 +233,23 @@ smoke-ai: ## Live end-to-end AI check against OpenRouter (~2 free-tier requests)
 
 # ─── Deploy ────────────────────────────────────────────────────────────────────
 .PHONY: deploy
-deploy: ## Deploy to the VPS (pull the GHCR image and roll the container)
-	bash deploy/deploy.sh
+deploy: ## How to deploy (spoiler: git push) and how to roll back by hand
+	@echo "Deploys are automatic: every push to master builds, pushes to GHCR,"
+	@echo "and rolls the VPS container. Just:"
+	@echo ""
+	@echo "    git push origin master"
+	@echo ""
+	@echo "Then watch it in GitHub -> Actions. If the new container doesn't go"
+	@echo "healthy within 120s, deploy.sh rolls back to the previous image by"
+	@echo "itself and the run goes red."
+	@echo ""
+	@echo "To roll back to a specific tag by hand (same script, same code path):"
+	@echo ""
+	@echo "    ssh contabo"
+	@echo "    bash ~/apps/sieve/deploy/deploy.sh ghcr.io/majorabdullah/research-tool:sha-<sha>"
+	@echo ""
+	@echo "deploy.sh runs ON THE VPS and needs an image ref -- running it here"
+	@echo "would try to deploy to your laptop. Setup: deploy/README.md"
 
 # ─── Cleanup ───────────────────────────────────────────────────────────────────
 .PHONY: clean clean-volumes nuke

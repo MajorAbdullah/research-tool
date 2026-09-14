@@ -35,7 +35,9 @@ services:
     pull_policy: always
 
     # Restated for anyone auditing "what does prod actually run with"
-    # without needing to cross-reference compose.yml.
+    # without needing to cross-reference compose.yml. memswap_limit is total
+    # memory + swap and must be >= mem_limit; equal means zero additional
+    # swap. Keep these in step with compose.yml.
     mem_limit: 1g
-    memswap_limit: 512m
+    memswap_limit: 1g
     restart: unless-stopped

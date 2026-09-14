@@ -233,9 +233,14 @@ mix them and fails loudly at startup rather than silently corrupting search. If 
 make deploy            # pull the GHCR image on the VPS and roll the container
 ```
 
-CI builds and pushes the image on merge to `main`; `deploy.sh` pulls and rolls it. The image is
-built **once** and promoted — never rebuilt per environment. Setup, required GitHub secrets, and
-the GHCR fine-grained-PAT trap are documented in [`deploy/README.md`](../deploy/README.md).
+You rarely run that by hand. **Every push to `master` deploys automatically** — CI builds the
+image, pushes it to GHCR, and runs `deploy.sh` on the VPS over SSH. The image is built **once**
+and promoted, never rebuilt per environment.
+
+If the new container doesn't report healthy within 120 s, `deploy.sh` **rolls back to the previous
+image by itself** and the Actions run goes red — so a bad push self-reverts rather than leaving the
+site down. Setup, required GitHub secrets, the rollback messages, and the GHCR fine-grained-PAT
+trap are all in [`deploy/README.md`](../deploy/README.md).
 
 Production lifecycle, if you need it directly:
 

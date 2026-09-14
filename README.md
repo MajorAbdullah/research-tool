@@ -150,6 +150,11 @@ select `extension/dist`. Open the extension's options page and paste your server
 There isn't one — it's a PWA. Open your Sieve URL in Chrome on Android → menu → **Install app**.
 "Sieve" then appears in the native share sheet from YouTube, Instagram, X and Chrome.
 
+Installability needs **HTTPS** (a service worker won't register over plain http), which is why the
+deployed instance matters — you can't install from `localhost:3060` over your LAN. On iOS, Safari
+can add Sieve to the home screen, but Apple doesn't implement Web Share Target, so it won't appear
+in the iOS share sheet; use the extension or the paste box there.
+
 ---
 
 ## Configuration
@@ -256,8 +261,11 @@ the extension does the scraping, and why enrichment is exactly one request.
 
 ## Deployment
 
-Built by GitHub Actions → pushed to GHCR → pulled over SSH → `docker compose up -d`, behind an nginx
-vhost with a certbot certificate. See [`deploy/`](./deploy/).
+**Every push to `master` deploys itself.** GitHub Actions builds the image, pushes it to GHCR, and
+runs `deploy/deploy.sh` on the VPS over SSH — which pulls, rolls the container, waits for the
+health check, and **rolls back to the previous image on its own** if the new one doesn't come up.
+Behind an nginx vhost with a certbot certificate. Setup and the rollback runbook:
+[`deploy/README.md`](./deploy/README.md).
 
 It is designed to be a **good neighbour** on a busy box — one container, hard `mem_limit: 1g`,
 capped worker concurrency, and ONNX inference capped at 2 threads.

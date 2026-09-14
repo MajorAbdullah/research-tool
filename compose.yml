@@ -64,12 +64,17 @@ services:
 
     # Good-neighbour hard cap: ~45 other containers already share this box's
     # 11 GB RAM (7.1 GB available, 1.4 GB swap already in use — see
-    # docs/adr/0001-sqlite-over-postgres.md). memswap_limit equal to
-    # mem_limit means zero *additional* swap for this container specifically
-    # — it must not compete for the swap headroom the box is already short
-    # on.
+    # docs/adr/0001-sqlite-over-postgres.md). It must not compete for the
+    # swap headroom the box is already short on.
+    #
+    # memswap_limit is TOTAL memory + swap, not a separate swap allowance, so
+    # setting it EQUAL to mem_limit is what grants zero *additional* swap.
+    # It must never be lower: Docker rejects that outright and the container
+    # refuses to start. These two values move together — 1g measured, not
+    # guessed (node 38 MB -> 348 MB once the embedding model loads, ~600 MB
+    # steady, ~509 MB peak under load).
     mem_limit: 1g
-    memswap_limit: 512m
+    memswap_limit: 1g
 
     restart: unless-stopped
 

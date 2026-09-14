@@ -5,12 +5,27 @@ import Script from 'next/script'
 import '@/app/globals.css'
 import { SidebarNav } from '@/components/common/sidebar-nav'
 import { BottomNav } from '@/components/common/bottom-nav'
+import { RegisterServiceWorker } from '@/components/common/register-service-worker'
 import { ThemeToggle } from '@/components/common/theme-toggle'
 import { Toaster } from '@/components/ui/toaster'
 
 export const metadata: Metadata = {
   title: 'Sieve',
   description: 'A self-hosted AI research library for people drowning in links.',
+  // Site-wide, deliberately. Chrome only offers "Install app" on a page that links a manifest
+  // AND has a registered service worker; linking it from just `/capture` (where this started)
+  // meant the entry point everyone actually opens — `/`, which redirects to `/library` — was
+  // never installable. Installing is the whole point: it's what puts Sieve in Android's share
+  // sheet via the manifest's `share_target`.
+  manifest: '/manifest.webmanifest',
+  // iOS can add Sieve to the home screen and will render it standalone with these. It still
+  // won't appear in the iOS share sheet — Apple doesn't implement Web Share Target — which is
+  // stated plainly in Settings → Connect your devices rather than left to be discovered.
+  appleWebApp: {
+    capable: true,
+    title: 'Sieve',
+    statusBarStyle: 'default',
+  },
 }
 
 export const viewport: Viewport = {
@@ -60,6 +75,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
         />
+
+        <RegisterServiceWorker />
 
         <div className="flex min-h-screen flex-col md:flex-row">
           <div className="hidden md:flex">

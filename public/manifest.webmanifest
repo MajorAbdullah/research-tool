@@ -1,9 +1,9 @@
 {
-  "id": "/capture",
+  "id": "/library",
   "name": "Sieve",
   "short_name": "Sieve",
   "description": "A self-hosted AI research library for people drowning in links.",
-  "start_url": "/capture",
+  "start_url": "/library",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",

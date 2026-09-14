@@ -1,0 +1,138 @@
+name: Deploy
+
+# Every push to master goes straight to https://sieve.teknikki.com. There is no
+# approval step and no CI gate: CI (.github/workflows/ci.yml) runs on the same
+# push and REPORTS, but a red CI run does not stop this workflow. That is a
+# deliberate choice by the repo owner — the safety net is deploy.sh's automatic
+# rollback (it restores the previous image if the new container doesn't report
+# healthy within 120s), not a gate. See docs/adr/0009's 2026-09-15 amendment.
+on:
+  push:
+    branches: [master]
+  # Lets you redeploy the current master, or promote an older SHA, from the
+  # Actions tab without an empty commit.
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Existing tag to deploy instead of building (e.g. sha-abc1234). Leave blank to build HEAD.'
+        required: false
+        default: ''
+
+# Never let two deploys roll the same container at once. NOT cancel-in-progress:
+# interrupting deploy.sh midway could leave the box on a half-rolled state with
+# no rollback recorded — a queued second deploy is strictly safer than a killed
+# first one.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: build · push to ghcr
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # GITHUB_TOKEN with packages:write can push to GHCR. A *fine-grained* PAT
+    # cannot — it fails in a way that reads like a credential typo and costs
+    # hours. Don't swap this for one. See deploy/README.md.
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_ref: ${{ steps.ref.outputs.image_ref }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Resolve the image ref
+        id: ref
+        run: |
+          # GHCR requires an all-lowercase path; github.repository preserves the
+          # owner's original casing (MajorAbdullah), which would 400 on push.
+          repo_lc="$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')"
+          if [ -n "${{ inputs.image_tag }}" ]; then
+            echo "image_ref=ghcr.io/${repo_lc}:${{ inputs.image_tag }}" >> "$GITHUB_OUTPUT"
+            echo "build_needed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "image_ref=ghcr.io/${repo_lc}:sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+            echo "build_needed=true" >> "$GITHUB_OUTPUT"
+            echo "repo_lc=${repo_lc}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: docker/setup-buildx-action@v3
+        if: steps.ref.outputs.build_needed == 'true'
+
+      - uses: docker/login-action@v3
+        if: steps.ref.outputs.build_needed == 'true'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        if: steps.ref.outputs.build_needed == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          # Both tags: sha-* is what deploy.sh pins to (and what you roll back
+          # to by name); latest is a convenience for humans reading GHCR.
+          tags: |
+            ${{ steps.ref.outputs.image_ref }}
+            ghcr.io/${{ steps.ref.outputs.repo_lc }}:latest
+          # Shares the layer cache with ci.yml's build of the same Dockerfile.
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: roll the vps
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Open an SSH session to the VPS
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          # Pin the host key on first contact. ssh-keyscan trusts whatever
+          # answers, so this is TOFU, not verification — acceptable for a box
+          # we also address by its literal IP, and better than StrictHostKeyChecking=no.
+          ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Ship the compose files and deploy/
+        run: |
+          # Re-shipped on EVERY deploy so the box always matches the commit that
+          # deployed. Never .env — that exists only on the VPS and CI must not
+          # be able to read or overwrite it.
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
+            'mkdir -p ~/apps/sieve'
+          scp -i ~/.ssh/id_ed25519 -r \
+            compose.yml compose.prod.yml deploy \
+            "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/apps/sieve/"
+
+      - name: Deploy
+        run: |
+          # deploy.sh pulls, rolls, waits for healthy, and rolls back to the
+          # previously-running image by itself if it doesn't get there. It exits
+          # non-zero on anything but a clean deploy, which fails this step.
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
+            "bash ~/apps/sieve/deploy/deploy.sh '${{ needs.build.outputs.image_ref }}'"
+
+      - name: Report what is live
+        # Runs even on failure: after a rollback, what's live is the thing you
+        # most need to see, and reading it here beats SSH-ing to find out.
+        if: always()
+        run: |
+          # Capture first, then write. Piping curl into tee would swallow the
+          # failure — the pipeline's status is tee's, so the `||` fallback
+          # could never fire and a dead site would report as empty output.
+          body="$(curl -fsS --max-time 20 https://sieve.teknikki.com/api/v1/health \
+                  || echo '{"error":"health endpoint unreachable"}')"
+          {
+            echo "### Live now"
+            echo '```json'
+            echo "$body"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "$body"

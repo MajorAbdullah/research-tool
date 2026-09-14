@@ -47,3 +47,45 @@ multi-service, multi-environment SaaS deployment in mind, which this is not.
 - A bad deploy actually happens and the "fast rollback to the previous GHCR tag" is discovered not to
   work when tested — that specific failure needs its own fix before revisiting whether the broader
   zero-downtime tooling is still unnecessary.
+
+---
+
+## Amendment — 2026-09-15: rollback is now automatic
+
+**Status:** Accepted · Supplements the Decision above; reverses nothing in it.
+
+When this ADR was written, deploys were assumed to be run by a human who would watch the result.
+`deploy/deploy.sh` encoded that assumption in its failure path, printing:
+
+> Deploy did NOT roll back automatically — that is deliberate, see
+> docs/adr/0009-no-iac-no-zero-downtime-deploys.md
+
+That message attributed a rule to this ADR that this ADR never stated. The Decision above asks for
+"a tested, fast rollback to the previous GHCR image tag" and says it "must actually be tested" —
+it says nothing about who or what triggers it.
+
+Deploys are now **ungated and automatic on every push to `master`** (the repo owner's explicit
+choice — tests still run and report, but do not block). Nobody is watching a deploy at the moment
+it fails, so "stop and wait to be noticed" means the site stays down for however long it takes
+someone to look. `deploy.sh` therefore now records the running image before pulling and, if the
+new container does not report healthy within the existing 120 s window, brings the previous image
+back and exits non-zero.
+
+This **serves** the original decision rather than contradicting it. The ADR's stated requirement
+was that the rollback path be *tested*; running it automatically on every failed deploy is the
+strongest form of that — it is no longer an emergency-only path that might be broken when it is
+finally needed.
+
+Deliberately unchanged:
+
+- Still one code path for deploy and rollback — the rollback is the same shell function, called
+  with a different image, not a second script.
+- It does **not** recurse. A rollback that also fails stops and says so loudly rather than looping.
+- A deploy that ends on anything other than the requested image exits non-zero, so Actions shows
+  red even when the rollback saved the site. A green run means the new image is live.
+- Nothing here adds zero-downtime, canary, or blue-green machinery. The ~5 s restart window stands,
+  and a rollback simply costs a second one.
+
+**What would reverse this amendment:** rollbacks firing on transient health-check flakiness rather
+than genuinely broken images — at which point the fix is a more accurate health check, not a
+return to manual recovery.
