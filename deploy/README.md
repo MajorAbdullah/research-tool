@@ -90,15 +90,39 @@ pattern already on the box, and carries two things that are load-bearing rather 
 (without it, nginx buffers the SSE stream and chat answers arrive in one lump at the end instead of
 token by token).
 
+**The order matters, and the obvious order is wrong.** The real vhost's 443 block points at
+`/etc/letsencrypt/live/sieve.teknikki.com/fullchain.pem`, which doesn't exist until certbot has
+run. nginx refuses to load a config referencing a missing certificate — so enabling the real vhost
+first makes `nginx -t` fail, and while it's failing **nginx can't be reloaded for any of the 20+
+other vhosts on this box either**. Hence the two-stage dance:
+
 ```bash
-sudo cp ~/apps/sieve/deploy/nginx/sieve.teknikki.com.conf /etc/nginx/sites-available/
-sudo ln -s ../sites-available/sieve.teknikki.com.conf /etc/nginx/sites-enabled/
-sudo certbot certonly --webroot -w /var/www/certbot -d sieve.teknikki.com
+cd ~/apps/sieve/deploy/nginx
+
+# 1. HTTP-only stub, so nginx -t passes and reloading is safe
+sudo cp sieve.teknikki.com.bootstrap.conf /etc/nginx/sites-available/
+sudo ln -sf ../sites-available/sieve.teknikki.com.bootstrap.conf /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+curl -s http://sieve.teknikki.com/          # -> "sieve: awaiting certificate"
+
+# 2. Issue the certificate. --nginx, NOT --webroot: it's how 21 of the 22
+#    certificates already on this box were obtained, and certbot records the
+#    authenticator so renewals then behave like every other site's.
+#    (/var/www/certbot does not exist here — don't copy a --webroot line from
+#    a generic tutorial.)
+sudo certbot certonly --nginx -d sieve.teknikki.com
+
+# 3. Swap in the real vhost — now the certificate it references exists
+sudo cp sieve.teknikki.com.conf /etc/nginx/sites-available/
+sudo rm /etc/nginx/sites-enabled/sieve.teknikki.com.bootstrap.conf
+sudo ln -sf ../sites-available/sieve.teknikki.com.conf /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-**`nginx -t` before every reload.** A syntax error takes down all 20+ sites on this box, not just
-Sieve.
+**`nginx -t` before every reload, without exception.** A syntax error here takes down ERPNext,
+BillionMail and everything else on this box, not just Sieve. If `nginx -t` ever fails, fix or
+remove the offending symlink *before* reloading — a running nginx keeps serving its last good
+config, so a failed `-t` is recoverable right up until someone reloads.
 
 ### 5. GitHub secrets and the GHCR package
 
@@ -230,6 +254,14 @@ ssh contabo 'bash ~/apps/sieve/deploy/backup.sh'       # back up right now
 **Container won't start / restarts in a loop.** `docker logs --since 10m sieve`. Most likely a
 missing or malformed `.env` — the app validates its environment at boot and exits rather than
 running half-configured.
+
+**`docker build` fails on your Mac at `sqlite-vec-linux-x64: not found`.** The image is
+linux/amd64 only by design — the assemble stage copies that package by name and prunes
+onnxruntime's non-linux binaries by path. The Dockerfile now checks `TARGETARCH` up front and fails
+in ~4 seconds with this explanation rather than 40 minutes later at the COPY. On Apple Silicon,
+`docker build --platform=linux/amd64` works but runs under QEMU and is very slow; pushing and
+letting CI build is usually faster. The VPS and the CI runners are both amd64, so the deploy path
+is unaffected.
 
 **`memswap_limit` errors on `compose up`.** `memswap_limit` is *total* memory + swap, not a
 separate swap allowance, and must be **≥** `mem_limit`. Equal means zero additional swap, which is

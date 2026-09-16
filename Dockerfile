@@ -42,6 +42,25 @@ ENV PATH=${PNPM_HOME}:${PATH}
 # Keep in sync with package.json's "packageManager" field.
 RUN corepack enable && corepack prepare pnpm@10.18.0 --activate
 
+# This image is linux/amd64 ONLY, on purpose — the assemble stage copies
+# `sqlite-vec-linux-x64` by name, and onnxruntime's non-linux binaries are
+# pruned by path. The VPS and the CI runners are both amd64, so nothing in
+# the deploy path is affected.
+#
+# Fail here, in seconds, rather than 40 minutes later at a `COPY ... not
+# found` for a package that was never going to be installed on this arch.
+# Building on an Apple Silicon Mac needs `--platform=linux/amd64` (correct,
+# but QEMU-emulated and very slow) — so on arm64 the right move is usually
+# to let CI build it instead.
+ARG TARGETARCH
+RUN if [ -n "${TARGETARCH}" ] && [ "${TARGETARCH}" != "amd64" ]; then \
+      echo "ERROR: this Dockerfile builds linux/amd64 only (got '${TARGETARCH}')." >&2; \
+      echo "       Retry with:  docker build --platform=linux/amd64 ..." >&2; \
+      echo "       On Apple Silicon that runs under emulation and is very slow;" >&2; \
+      echo "       pushing to CI is usually faster. See deploy/README.md." >&2; \
+      exit 1; \
+    fi
+
 # -----------------------------------------------------------------------------
 # toolchain — the native build chain, isolated in its own layer so both
 # install stages below (deps, prod-deps) can share it without duplicating
