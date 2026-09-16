@@ -32,6 +32,7 @@ export {
 
 export {
   createEmbeddingProvider,
+  createEmbeddingProviderFromConfig,
   selectEmbeddingProviderFromEnv,
   type EmbeddingProviderKind,
   type EmbeddingProviderSelection,

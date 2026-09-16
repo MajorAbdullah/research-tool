@@ -25,13 +25,13 @@ It replaces the "send links to my own WhatsApp chat" habit, which piles up and r
 |---|---|
 | Runtime | Node 24, TypeScript strict, **Next.js 16 App Router**, `output: standalone` |
 | Database | **SQLite (WAL)** via `better-sqlite3` — one file, no DB container |
-| Vectors | **sqlite-vec** `vec0` virtual table, 384 dims |
+| Vectors | **sqlite-vec** `vec0` virtual table, width follows `EMBEDDING_DIMENSIONS` (**2048** deployed; 384 on `local`) |
 | Full-text | **SQLite FTS5** with `bm25()` |
 | Search | Hybrid — FTS5 + vector, fused with **Reciprocal Rank Fusion** (`k=60`) |
 | ORM / migrations | **Drizzle ORM + drizzle-kit** |
 | Queue | `jobs` table + in-process poller from `instrumentation.ts` |
 | LLM | **OpenRouter, free models only**, two chains (see below) |
-| Embeddings | **Local** `fastembed` / `bge-small-en-v1.5`, 384 dims, ONNX-quantized — **~350 MB resident, measured** |
+| Embeddings | **OpenRouter** `nvidia/nemotron-3-embed-1b:free`, **2048 dims** (ADR 0003 amendment). `local` (`bge-small-en-v1.5`, 384 dims, ~350 MB resident) is still fully wired via `EMBEDDING_PROVIDER` |
 | Auth | Auth.js — credentials + passkey, single seeded user |
 | UI | Tailwind v4 + shadcn/ui + TanStack Query |
 | Extension | Manifest V3, vanilla TS + Vite |
@@ -57,15 +57,25 @@ top-level `eslint` key (Next 16 removed built-in lint integration; use `pnpm lin
 And: the `middleware` file convention is **deprecated in Next 16** — this repo uses `proxy.ts`
 with a named `proxy` export. The `edge` runtime is not supported there; `proxy` is always nodejs.
 
-**Scale reality:** one user, one container, **`mem_limit: 1g`** (measured ~550-650 MB steady), sharing
-a 6-vCPU box with ~45 other containers and 7.1 GB free. Every design choice is bounded by being a
-good neighbour on that box.
+**Scale reality:** one user, one container, **`mem_limit: 512m`** — the hosted embedding provider
+removed the ~350 MB resident model that forced 1g in the first place. Sharing a 6-vCPU box with
+~45 other containers and 7.1 GB free. Every design choice is bounded by being a good neighbour on
+that box. **If you set `EMBEDDING_PROVIDER=local`, raise `mem_limit` back to 1g** — the container
+will be OOM-killed once the model loads otherwise.
 
-> **The embedding model dominates the memory budget.** Measured: node baseline 38 MB -> 69 MB after
-> `require('fastembed')` -> **348 MB once the model loads** -> 400-509 MB under embedding load, stable
-> (no leak across 120 chunks). `heapUsed` is only 7 MB, so ~390 MB is native onnxruntime arena that
-> **GC cannot reclaim**. Warm init from the on-disk cache is 0.25 s; throughput ~87 ms/chunk.
-> An early estimate of "~120 MB" was wrong by ~3x — see ADR 0003.
+> **The embedding model used to dominate the memory budget — it no longer runs.** With
+> `EMBEDDING_PROVIDER=openrouter` (the deployed default since the ADR 0003 amendment),
+> `onnxruntime` is never loaded; verified by checking it isn't mapped into the server process.
+>
+> The numbers below still apply to `EMBEDDING_PROVIDER=local`, and are why that stopped being the
+> default on a box shared with ~45 other containers. Measured: node baseline 38 MB -> 69 MB after
+> `require('fastembed')` -> **348 MB once the model loads** -> 400-509 MB under embedding load,
+> stable (no leak across 120 chunks). `heapUsed` is only 7 MB, so ~390 MB is native onnxruntime
+> arena that **GC cannot reclaim**. Warm init from the on-disk cache is 0.25 s; throughput ~87
+> ms/chunk. An early estimate of "~120 MB" was wrong by ~3x.
+>
+> The trade that replaced it is not free: every search query now spends free-tier request budget.
+> See the ADR 0003 amendment for what was measured before making it.
 
 ---
 
@@ -117,6 +127,8 @@ These appear in every domain doc. Internalize them once; apply them to code, inf
 
 - **Never hardcode an LLM model id in code.** Model chains live in env (`LLM_CHAIN_ENRICH`, `LLM_CHAIN_CHAT`). Free models rotate out without warning.
 - **Never mix embedding models in one index.** Vectors from different models aren't comparable. Each chunk records `embedding_model`; a mismatch fails loudly at startup. Changing models requires `pnpm reembed`, never a silent fallback.
+- **The embedding dimension is configuration, not a constant.** `EMBEDDING_DIMENSIONS` must equal `chunk_vec`'s column width exactly; a wrong value doesn't error, it writes vectors that silently never match. `chunk_vec` is reconciled at boot — rebuilt only while empty, a hard boot failure if populated. Never drop a populated index as a side effect of an env edit.
+- **A hosted embedding provider never falls back to the local one** (or vice versa) at runtime. Different widths, incomparable vectors. It degrades to FTS-only search instead.
 - **Embedding failures retry the same model.** They never fail over to a different-dimension one.
 - **Batch embeddings and batch relation-labeling.** One request per item, not one per chunk or per pair. The free tier is **1,000 requests/day account-wide** — per-chunk calls exhaust it in 50 items.
 - **Never let extraction failure look like success.** Every item records `extraction_tier` (`full` / `partial` / `metadata_only`) and the UI shows it. Degradation is visible and re-runnable, never silent.
@@ -177,17 +189,20 @@ Therefore **requests-per-item is a primary design constraint**, not an optimizat
 
 | Stage | Budget | How |
 |---|---|---|
-| Embeddings | **0 requests** | Local model. This also means **searching costs nothing** |
+| Embeddings | **1 request per batch** | Hosted model — so **searching now costs budget too**. Measured: embedding calls do increment the shared counter. Batch, never per chunk. On `EMBEDDING_PROVIDER=local` this returns to 0 |
 | Enrichment | **1 request** | One structured call returns tldr + bullets + tags + topic + repo fields together |
 | Relation labeling | **~0.05 requests** | Batched sweep: up to 20 pending pairs per request |
 
-≈ **1.05 requests/item → ~900 items/day.** If you add an LLM call to the per-item path, you are
-spending a scarce shared resource — justify it or batch it.
+≈ **1.05 requests/item plus one per embed batch → ~900 items/day.** If you add an LLM call to the
+per-item path, you are spending a scarce shared resource — justify it or batch it.
 
 **Graceful exhaustion is a feature.** At the daily cap, LLM stages pause and jobs stay queued; 100
 requests stay reserved for interactive work so background backfill can never starve your own chat.
-Capture, extraction, chunking, embedding, FTS and search are all local — **the system stays useful
-at zero budget**, only summaries land late. Never break that property.
+Capture, extraction, chunking and FTS are all local, and **search falls back to keyword-only (FTS)
+whenever the embedding provider is unavailable** — exhausted budget, timeout, 429, or offline.
+**The system stays useful at zero budget**; summaries land late and search gets less conceptual,
+but nothing errors. Never break that property — it is the reason the hosted embedding provider is
+acceptable at all.
 
 ---
 

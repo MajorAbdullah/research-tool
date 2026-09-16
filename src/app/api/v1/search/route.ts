@@ -13,7 +13,9 @@ import { ZodError } from 'zod'
 import { auth } from '@/lib/auth'
 import { requireUserId, ScopingError } from '@/repositories/scoping'
 import { getSqlite } from '@/db/client'
-import { getLocalEmbeddingProvider } from '@/lib/embeddings'
+import { createEmbeddingProviderFromConfig } from '@/lib/embeddings'
+import { BudgetManager, createSqliteSettingsPort } from '@/lib/ai'
+import { getConfig } from '@/lib/config'
 import { logger } from '@/lib/logger'
 import {
   hybridSearch,
@@ -63,17 +65,46 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       limit: parsed.limit,
     }
 
-    // Always the LOCAL embedding provider, never `selectEmbeddingProviderFromEnv()` — a
-    // deliberate coupling, not an oversight. docs/API.md §3.2 and ADR 0003 both state, as an
-    // unconditional property of this system, that search spends zero OpenRouter quota; switching
-    // `EMBEDDING_PROVIDER` to `openrouter` is itself a whole-corpus, `pnpm reembed`-gated decision
-    // (ADR 0003) owned by `@/lib/embeddings`, at which point this one line would need to follow —
-    // building speculative dynamic provider-switching into search today, for a path nothing in
-    // this deployment currently uses, is exactly what CLAUDE.md's KISS/YAGNI rule argues against.
-    const result =
-      parsed.tier === 'fts'
-        ? ftsOnlySearch(sqlite, searchOptions)
-        : await hybridSearch(sqlite, getLocalEmbeddingProvider(), searchOptions)
+    // Follows EMBEDDING_PROVIDER, via the config factory. It used to be pinned to the local
+    // provider, on the grounds that search spending zero OpenRouter quota was an unconditional
+    // property of the system; that comment also predicted that switching the provider was "a
+    // whole-corpus, pnpm reembed-gated decision ... at which point this one line would need to
+    // follow". That decision has now been taken (ADR 0003 amendment), so it follows.
+    //
+    // With the hosted provider, a query embedding is a network call that can fail or run the
+    // daily budget out — so the hybrid path degrades to keyword-only rather than erroring. See
+    // CLAUDE.md: "the system stays useful at zero budget ... Never break that property."
+    let result
+    if (parsed.tier === 'fts') {
+      result = ftsOnlySearch(sqlite, searchOptions)
+    } else {
+      try {
+        const config = getConfig()
+        // `interactive` lane: a search is something the user is waiting on, so it may draw on the
+        // reserve that background ingest deliberately cannot touch. For the local provider the
+        // budget argument is ignored entirely — it costs no requests.
+        const embeddingProvider = createEmbeddingProviderFromConfig({
+          config,
+          budget: new BudgetManager(
+            createSqliteSettingsPort(sqlite),
+            config.llmDailyCap,
+            config.llmInteractiveReserve,
+          ),
+          lane: 'interactive',
+        })
+        result = await hybridSearch(sqlite, embeddingProvider, searchOptions)
+      } catch (err) {
+        // Deliberately broad: budget exhaustion, a timeout, a 429, or the box being offline all
+        // land here, and the right response to every one of them is the same — return keyword
+        // results now rather than nothing. Logged at warn (not swallowed) so a provider that is
+        // failing constantly is visible instead of just quietly feeling worse than it should.
+        logger.warn(
+          { err, requestId, userId },
+          'search: embedding provider unavailable — degrading to keyword-only (FTS)',
+        )
+        result = ftsOnlySearch(sqlite, searchOptions)
+      }
+    }
 
     return NextResponse.json(result)
   } catch (err) {

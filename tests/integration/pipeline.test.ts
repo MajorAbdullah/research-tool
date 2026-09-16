@@ -32,7 +32,7 @@ import { createRelateHandler } from '@/worker/jobs/relate'
 import { createIndexHandler } from '@/worker/jobs/index-stage'
 import { retryItemFromStage } from '@/worker/retry'
 import { getItemById } from '@/repositories/items'
-import { makeTestDb, type TestDb } from '../helpers/db'
+import { makeTestDb, EMBEDDING_DIMS, type TestDb } from '../helpers/db'
 import { makeUser } from '../helpers/factories'
 import {
   createFakeEmbeddingProvider,
@@ -94,7 +94,11 @@ function buildPipeline(rawDb: TestDb, options: BuildPipelineOptions) {
     [JobName.Embed]: createEmbedHandler({ db, jobQueue, embeddingProvider }) as (
       p: JobPayload,
     ) => Promise<void>,
-    [JobName.Relate]: createRelateHandler({ db, jobQueue }) as (p: JobPayload) => Promise<void>,
+    [JobName.Relate]: createRelateHandler({
+      db,
+      jobQueue,
+      embeddingDimensions: EMBEDDING_DIMS,
+    }) as (p: JobPayload) => Promise<void>,
     [JobName.Index]: createIndexHandler({ db }) as (p: JobPayload) => Promise<void>,
   }
 

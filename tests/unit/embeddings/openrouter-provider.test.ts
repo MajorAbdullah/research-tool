@@ -105,3 +105,27 @@ describe('OpenRouterEmbeddingProvider', () => {
     expect(provider.dimensions).toBe(1024)
   })
 })
+
+describe('OpenRouterEmbeddingProvider dimension guard', () => {
+  it('refuses a response whose width differs from the configured dimension', async () => {
+    // ADR 0003's second failure mode, made concrete: a hosted model can be swapped behind a
+    // stable `:free` alias. Writing 1024-d vectors into a chunk_vec sized 2048 would either be
+    // rejected several frames away by sqlite-vec, or — worse, if the widths happened to line up
+    // — stored as vectors that silently never match anything again.
+    const fetchImpl = fakeFetch([{ embedding: new Array(1024).fill(0.1), index: 0 }])
+    const provider = new OpenRouterEmbeddingProvider({
+      apiKey: 'k',
+      dimensions: 2048,
+      fetchImpl,
+    })
+
+    await expect(provider.embedQuery('anything')).rejects.toThrow(/returned 1024-d/)
+    await expect(provider.embedQuery('anything')).rejects.toThrow(/2048-d/)
+  })
+
+  it('accepts a response that matches the configured dimension', async () => {
+    const fetchImpl = fakeFetch([{ embedding: new Array(2048).fill(0.1), index: 0 }])
+    const provider = new OpenRouterEmbeddingProvider({ apiKey: 'k', dimensions: 2048, fetchImpl })
+    await expect(provider.embedQuery('anything')).resolves.toHaveLength(2048)
+  })
+})

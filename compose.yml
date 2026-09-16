@@ -70,11 +70,18 @@ services:
     # memswap_limit is TOTAL memory + swap, not a separate swap allowance, so
     # setting it EQUAL to mem_limit is what grants zero *additional* swap.
     # It must never be lower: Docker rejects that outright and the container
-    # refuses to start. These two values move together — 1g measured, not
-    # guessed (node 38 MB -> 348 MB once the embedding model loads, ~600 MB
-    # steady, ~509 MB peak under load).
-    mem_limit: 1g
-    memswap_limit: 1g
+    # refuses to start. These two values move together.
+    #
+    # 512m because embeddings are hosted now (EMBEDDING_PROVIDER=openrouter,
+    # ADR 0003 amendment) and onnxruntime is never loaded — verified it isn't
+    # mapped into the server process at all. The ~350 MB resident model is
+    # what forced 1g; without it, steady state is well under half of this.
+    #
+    # RAISE THIS BACK TO 1g IF YOU SET EMBEDDING_PROVIDER=local. The model
+    # alone is ~348 MB and peaks ~509 MB under load; at 512m the container
+    # would be OOM-killed shortly after boot.
+    mem_limit: 512m
+    memswap_limit: 512m
 
     restart: unless-stopped
 

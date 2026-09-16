@@ -13,7 +13,7 @@
  */
 
 import type { EmbeddingProvider } from '@/types/contracts'
-import { createEmbeddingProvider, selectEmbeddingProviderFromEnv } from './factory'
+import { createEmbeddingProviderFromConfig } from './factory'
 import { recordEmbeddingModel } from './settings-guard'
 import { createSqliteSettingsPort, type SqliteLike } from '@/lib/ai/settings-store'
 
@@ -54,6 +54,18 @@ export async function reembedAll(deps: ReembedDeps): Promise<ReembedResult> {
 
   const totalRow = db.prepare('SELECT COUNT(*) AS n FROM chunks').get() as { n: number } | undefined
   const total = totalRow?.n ?? 0
+
+  // Rebuild `chunk_vec` from scratch at THIS provider's width. A vec0 virtual table's dimension
+  // is fixed at creation and cannot be ALTERed, so switching to a model of a different width
+  // (bge-small is 384; OpenRouter's free NVIDIA models are 2048) is impossible without dropping
+  // it. Safe to do unconditionally: chunk_vec is pure derived data, and the whole point of this
+  // function is that every row in it is about to be rewritten from `chunks` anyway.
+  //
+  // Deliberately OUTSIDE the transaction below: SQLite cannot roll back a DROP of a virtual
+  // table cleanly, and a half-dropped vec table is worse than a rebuilt empty one — if the
+  // embedding pass then fails, re-running this command repairs it.
+  db.exec('DROP TABLE IF EXISTS chunk_vec')
+  db.exec(`CREATE VIRTUAL TABLE chunk_vec USING vec0(embedding float[${provider.dimensions}])`)
 
   const selectBatch = db.prepare('SELECT id, text FROM chunks ORDER BY id LIMIT ? OFFSET ?')
   const deleteVec = db.prepare('DELETE FROM chunk_vec WHERE rowid = ?')
@@ -116,16 +128,10 @@ function isMainModule(): boolean {
 }
 
 async function main(): Promise<void> {
-  const providerKind = selectEmbeddingProviderFromEnv()
-  if (providerKind === 'openrouter') {
-    throw new Error(
-      "EMBEDDING_PROVIDER=openrouter is not auto-wired by 'pnpm reembed' — there is no safe " +
-        'default dimension to assume for a hosted embedding model. Write a small wrapper script ' +
-        'that calls createEmbeddingProvider({ provider: "openrouter", openRouter: {...} }) and ' +
-        'reembedAll() directly with explicit options. See src/lib/embeddings/openrouter-provider.ts.',
-    )
-  }
-  const provider = createEmbeddingProvider({ provider: providerKind })
+  // Both providers are wired now. The dimension that used to have "no safe default" comes from
+  // EMBEDDING_DIMENSIONS, which config.ts requires whenever EMBEDDING_PROVIDER=openrouter — so
+  // it is still never guessed, just no longer hand-passed by a one-off wrapper script.
+  const provider = createEmbeddingProviderFromConfig()
 
   const sqlitePath = process.env.SQLITE_PATH ?? './data/sieve.db'
   // Dynamic imports: this CLI is the only place in src/lib/embeddings/** that opens its own raw

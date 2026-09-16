@@ -12,7 +12,6 @@ import { JobName, RelationType } from '@/types/contracts'
 import type { RelateJobPayload } from '@/types/contracts'
 import type { JobQueue } from '@/lib/queue'
 import type { DbClient } from '@/db/client'
-import { LOCAL_EMBEDDING_DIMENSIONS } from '@/lib/embeddings'
 import { getItemById } from '@/repositories/items'
 import { meanVectorForItem } from '@/repositories/chunks'
 import { findNearestItemsByVector, insertRelationIfAbsent } from '@/repositories/relations'
@@ -36,6 +35,16 @@ function distanceToScore(distance: number): number {
 export interface RelateHandlerDeps {
   db: DbClient
   jobQueue: JobQueue
+  /**
+   * Width of the vectors in `chunk_vec`, i.e. the configured embedding model's dimension.
+   *
+   * Injected rather than imported as a constant: this used to be `LOCAL_EMBEDDING_DIMENSIONS`
+   * (384), which silently became wrong the moment the deployment moved to a 2048-d hosted model —
+   * `meanVectorForItem` built a 384-float vector and sqlite-vec rejected the kNN with
+   * "Dimension mismatch ... Expected 2048 dimensions but received 384", failing every item at the
+   * relate stage after extract/enrich/embed had all succeeded.
+   */
+  embeddingDimensions: number
 }
 
 export function createRelateHandler(deps: RelateHandlerDeps): JobHandler<RelateJobPayload> {
@@ -46,7 +55,7 @@ export function createRelateHandler(deps: RelateHandlerDeps): JobHandler<RelateJ
     }
 
     await runStage({ db: deps.db, stage: JobName.Relate, itemId: item.id }, async () => {
-      const meanVector = meanVectorForItem(deps.db, item.id, LOCAL_EMBEDDING_DIMENSIONS)
+      const meanVector = meanVectorForItem(deps.db, item.id, deps.embeddingDimensions)
 
       if (meanVector) {
         const neighbors = findNearestItemsByVector(deps.db, {

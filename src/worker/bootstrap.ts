@@ -12,7 +12,7 @@
  *   shared-counter state (ADR 0004) — two independent instances would each think they had the
  *   full budget to themselves.
  * - The local embedding provider: ~350 MB resident once loaded (CLAUDE.md). It's already a
- *   `globalThis`-guarded singleton inside `getLocalEmbeddingProvider()` itself, so calling it
+ *   `globalThis`-guarded singleton inside the local provider itself, so calling it
  *   twice here would still only load the model once — but `enrich` (topic-assignment similarity)
  *   and `embed` need to end up sharing that exact instance rather than each reaching for their
  *   own reference independently, which is what constructing it once, here, and threading it
@@ -32,11 +32,7 @@ import {
   createEnrichmentProvider,
   RATE_LIMIT_PER_MINUTE,
 } from '@/lib/ai'
-import {
-  getLocalEmbeddingProvider,
-  selectEmbeddingProviderFromEnv,
-  assertEmbeddingModelMatches,
-} from '@/lib/embeddings'
+import { createEmbeddingProviderFromConfig, assertEmbeddingModelMatches } from '@/lib/embeddings'
 import {
   GithubExtractor,
   YoutubeExtractor,
@@ -85,27 +81,20 @@ function buildExtractors(): Extractor[] {
   ]
 }
 
-async function buildEmbeddingProvider(): Promise<EmbeddingProvider> {
-  const kind = selectEmbeddingProviderFromEnv()
-  if (kind !== 'local') {
-    // CLAUDE.md's stack table and .env.example both commit to the local model as the supported
-    // path; the OpenRouter alternative is a documented-but-not-wired opt-in (see
-    // src/lib/embeddings/factory.ts's own guard) that needs a dimension count with no safe
-    // default — building that out is future work, not this phase's scope. Fail loudly at boot
-    // instead of silently running with the wrong provider.
-    throw new Error(
-      `EMBEDDING_PROVIDER=${kind} is not wired up by the P7 pipeline bootstrap — only 'local' is. ` +
-        'See src/lib/embeddings/factory.ts.',
-    )
-  }
-  const provider = getLocalEmbeddingProvider()
-  await provider.warmUp()
+async function buildEmbeddingProvider(budget: BudgetManager): Promise<EmbeddingProvider> {
+  // `background` lane: a bulk import must never eat the reserve that keeps interactive search and
+  // chat working. Same split enrichment already uses.
+  const provider = createEmbeddingProviderFromConfig({ budget, lane: 'background' })
+  // Only the local provider has anything to warm — it's loading a ~350 MB ONNX model off disk,
+  // which is exactly the cost the hosted provider exists to avoid paying. `warmUp` is optional on
+  // the interface for that reason; calling it on the hosted provider would be a pointless no-op.
+  await provider.warmUp?.()
   return provider
 }
 
 /**
  * Idempotent — safe to call more than once (e.g. a dev hot-reload): `getDb()`/`getJobQueue()`/
- * `getLocalEmbeddingProvider()` are each already `globalThis`- or module-level-singleton-guarded,
+ * `the embedding provider are each already `globalThis`- or module-level-singleton-guarded,
  * and re-registering the same handlers into `registry` is harmless.
  */
 export async function bootstrapPipeline(): Promise<PipelineDeps> {
@@ -136,8 +125,11 @@ export async function bootstrapPipeline(): Promise<PipelineDeps> {
     promptVersion: PROMPT_VERSION,
   })
 
-  logger.info('bootstrap: warming the local embedding model')
-  const embeddingProvider = await buildEmbeddingProvider()
+  logger.info(
+    { provider: config.embeddingProvider, model: config.embeddingModel },
+    'bootstrap: building the embedding provider',
+  )
+  const embeddingProvider = await buildEmbeddingProvider(budget)
   assertEmbeddingModelMatches(embeddingProvider.model, settingsPort)
 
   const extractors = buildExtractors()
@@ -156,7 +148,13 @@ export async function bootstrapPipeline(): Promise<PipelineDeps> {
       EMBED_CONCURRENCY,
       createEmbedHandler({ db, jobQueue, embeddingProvider }),
     ),
-    relate: createRelateHandler({ db, jobQueue }),
+    // Dimension comes from the provider that actually wrote the vectors, not a constant — those
+    // two must agree or the kNN is rejected outright.
+    relate: createRelateHandler({
+      db,
+      jobQueue,
+      embeddingDimensions: embeddingProvider.dimensions,
+    }),
     index: createIndexHandler({ db }),
   })
 

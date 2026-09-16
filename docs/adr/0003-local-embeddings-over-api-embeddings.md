@@ -100,3 +100,76 @@ free, which the repo's own KISS/YAGNI rule argues against.
   both conditions, not just one.
 - The golden-set eval (P9.1.7) shows local embedding quality measurably underperforming a hosted
   alternative on context precision/recall by enough to justify paying the quota cost for it.
+
+---
+
+## Amendment — 2026-09-16: `openrouter` is now the deployed default
+
+**Status:** Accepted · Reverses this ADR's *default*, keeps every one of its safeguards.
+
+The Decision above made `local` the default and kept an OpenRouter provider as a documented,
+deliberately unwired alternative "for trading quota for RAM". That trade has now been made
+deliberately, for the deployment on the shared Contabo box. `EMBEDDING_PROVIDER=openrouter`,
+`nvidia/nemotron-3-embed-1b:free`, **2048 dimensions**.
+
+### What was re-tested, rather than assumed
+
+This ADR was written before the code ever called the endpoint. Measured against it directly:
+
+| Question | Answer |
+|---|---|
+| Does OpenRouter even serve embeddings? | Yes — `POST /api/v1/embeddings`, batched array input, results returned with `index` |
+| Dimensions | **2048** for both free NVIDIA models (`nemotron-3-embed-1b`, `llama-nemotron-embed-vl-1b-v2`) |
+| Does it spend the shared free-tier budget? | **Yes.** 10 embedding calls moved `free_model_daily_requests.used` by 5. The exact ratio is OpenRouter's business and may change; we charge 1 per call, which is conservative |
+| Free alternatives at other widths? | None. The 1536-d and 4096-d models are paid, which the project's free-only constraint rules out |
+| Is it in the public model catalog? | **No** — `/api/v1/models` lists no embedding models at all, so there is no way to enumerate them or detect a retirement in advance |
+
+So this ADR's **first** argument — that hosted embeddings spend the shared quota on every query —
+was correct and is unchanged. What changed is the weighting, not the fact: the deployment target
+is a box with ~45 other containers, and 350 MB of permanently-resident ONNX arena is a larger
+practical cost there than a few hundred requests out of 1,000/day. Verified after the switch:
+`onnxruntime` is no longer mapped into the server process at all.
+
+This ADR's **second** argument — silent model retirement corrupting the index — is *strengthened*
+by the catalog finding, and is now defended in code rather than by avoidance (see below).
+
+### What is kept, unchanged
+
+- **Never mix embedding models in one index.** Still the rule. `settings.embedding_model` still
+  guards it at boot, and switching still requires `pnpm reembed`.
+- **No automatic provider fallback.** A hosted provider that is down does *not* fail over to the
+  local one — different vectors, silent corruption. It degrades (below) instead.
+- **Batching.** One request per batch, never per chunk.
+
+### What is new, because the risks this ADR named are now live
+
+- **The dimension is configuration, not a constant.** `EMBEDDING_DIMENSIONS` is required for
+  `openrouter` and has no default — this ADR's "an API model whose dimensions aren't guaranteed
+  documented" is exactly why. `chunk_vec`'s width is reconciled against it at boot: rebuilt if the
+  table is empty, a hard boot failure if it holds vectors, never a silent drop of the index.
+- **Responses are width-checked.** If the model behind the `:free` alias starts returning a
+  different width, the provider throws and names both numbers instead of writing incomparable
+  vectors. This is the retirement scenario this ADR predicted, caught at the point it happens.
+- **Embedding calls are metered.** `BudgetedEmbeddingProvider` reserves against the same
+  `BudgetManager` as enrichment and chat — ingest on the `background` lane, search on
+  `interactive`, so a bulk import cannot starve your own searches.
+- **Search degrades instead of failing.** Budget exhausted, a timeout, a 429, or no network all
+  fall back to keyword-only FTS. CLAUDE.md's "the system stays useful at zero budget ... Never
+  break that property" survives this change — verified by spending the budget to the cap and
+  confirming search still returned the correct top result.
+
+### Consequences that changed
+
+- Searching is **no longer free**. An embedded query costs budget, and at zero budget search is
+  keyword-only — still useful, measurably worse at conceptual matching.
+- Search now depends on the network. Offline, it is keyword-only.
+- Vectors are **5.3× larger** on disk (2048 × 4 bytes vs 384 × 4).
+- ~350 MB of RAM is returned to the box.
+
+### What would reverse this amendment
+
+- Search quality at zero budget proving unacceptable often enough to matter — i.e. the daily cap
+  is actually being hit during normal use, not just during bulk imports.
+- The free NVIDIA embedding models being retired. Since they aren't in the public catalog, expect
+  to discover this via the width check or a sudden run of 404s, not an announcement. Falling back
+  to `local` is `EMBEDDING_PROVIDER=local`, `EMBEDDING_DIMENSIONS=384`, `pnpm reembed`.

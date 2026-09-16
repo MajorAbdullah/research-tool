@@ -37,7 +37,9 @@ services:
     # Restated for anyone auditing "what does prod actually run with"
     # without needing to cross-reference compose.yml. memswap_limit is total
     # memory + swap and must be >= mem_limit; equal means zero additional
-    # swap. Keep these in step with compose.yml.
-    mem_limit: 1g
-    memswap_limit: 1g
+    # swap. Keep these in step with compose.yml — and raise both to 1g if
+    # EMBEDDING_PROVIDER is ever set back to `local` (the ~350 MB ONNX model
+    # does not fit in 512m).
+    mem_limit: 512m
+    memswap_limit: 512m
     restart: unless-stopped

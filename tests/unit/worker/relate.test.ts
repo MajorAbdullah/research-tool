@@ -4,7 +4,7 @@ import * as schema from '@/db/schema'
 import { JobName } from '@/types/contracts'
 import { createJobQueue, type JobQueue } from '@/lib/queue'
 import { createRelateHandler } from '@/worker/jobs/relate'
-import { makeTestDb, type TestDb } from '../../helpers/db'
+import { makeTestDb, EMBEDDING_DIMS, type TestDb } from '../../helpers/db'
 import { makeUser, makeItem, makeChunk } from '../../helpers/factories'
 
 function wrap(rawDb: TestDb) {
@@ -37,7 +37,7 @@ describe('createRelateHandler', () => {
     makeChunk(rawDb, itemA, 'a repo about vector databases', { seed: 1 })
     makeChunk(rawDb, itemB, 'another repo about vector databases', { seed: 1 }) // same seed -> same vector
 
-    const handler = createRelateHandler({ db, jobQueue })
+    const handler = createRelateHandler({ db, jobQueue, embeddingDimensions: EMBEDDING_DIMS })
     await handler({ name: JobName.Relate, itemId: itemA })
 
     const rows = db.$client.prepare('select * from relations').all() as RelationRow[]
@@ -56,7 +56,7 @@ describe('createRelateHandler', () => {
     makeChunk(rawDb, mine, 'shared text', { seed: 5, userId: 1 })
     makeChunk(rawDb, someoneElses, 'shared text', { seed: 5, userId: 2 })
 
-    const handler = createRelateHandler({ db, jobQueue })
+    const handler = createRelateHandler({ db, jobQueue, embeddingDimensions: EMBEDDING_DIMS })
     await handler({ name: JobName.Relate, itemId: mine })
 
     const rows = db.$client.prepare('select * from relations').all()
@@ -65,7 +65,7 @@ describe('createRelateHandler', () => {
 
   it('an item with zero chunks skips relating entirely but still enqueues index', async () => {
     const itemId = makeItem(rawDb, { id: 50, kind: 'other' })
-    const handler = createRelateHandler({ db, jobQueue })
+    const handler = createRelateHandler({ db, jobQueue, embeddingDimensions: EMBEDDING_DIMS })
 
     await expect(handler({ name: JobName.Relate, itemId })).resolves.toBeUndefined()
 
@@ -79,7 +79,7 @@ describe('createRelateHandler', () => {
     makeChunk(rawDb, itemA, 'x', { seed: 2 })
     makeChunk(rawDb, itemB, 'x', { seed: 2 })
 
-    const handler = createRelateHandler({ db, jobQueue })
+    const handler = createRelateHandler({ db, jobQueue, embeddingDimensions: EMBEDDING_DIMS })
     await handler({ name: JobName.Relate, itemId: itemA })
     await expect(handler({ name: JobName.Relate, itemId: itemA })).resolves.toBeUndefined()
 
@@ -92,7 +92,7 @@ describe('createRelateHandler', () => {
     makeChunk(rawDb, itemId, 'solo chunk one', { seed: 3, ord: 0 })
     makeChunk(rawDb, itemId, 'solo chunk two', { seed: 3, ord: 1 })
 
-    const handler = createRelateHandler({ db, jobQueue })
+    const handler = createRelateHandler({ db, jobQueue, embeddingDimensions: EMBEDDING_DIMS })
     await handler({ name: JobName.Relate, itemId })
 
     expect(db.$client.prepare('select count(*) c from relations').get()).toEqual({ c: 0 })
@@ -104,7 +104,7 @@ describe('createRelateHandler', () => {
     makeChunk(rawDb, itemA, 'x', { seed: 1 })
     makeChunk(rawDb, itemB, 'y', { seed: 9 }) // very different seed -> far apart
 
-    const handler = createRelateHandler({ db, jobQueue })
+    const handler = createRelateHandler({ db, jobQueue, embeddingDimensions: EMBEDDING_DIMS })
     await handler({ name: JobName.Relate, itemId: itemA })
 
     expect(db.$client.prepare('select count(*) c from relations').get()).toEqual({ c: 0 })

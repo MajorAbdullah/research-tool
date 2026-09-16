@@ -167,7 +167,7 @@ Every variable is documented in [`.env.example`](./.env.example). The ones worth
 | `LLM_CHAIN_CHAT` | 4 free models | Ordered fallback for chat/RAG. Leads with 1M-context models |
 | `LLM_DAILY_CAP` | `900` | Of the 1,000/day free allowance |
 | `LLM_INTERACTIVE_RESERVE` | `100` | Held back so background backfill can never starve your own chat |
-| `EMBEDDING_PROVIDER` | `local` | `local` uses `bge-small-en-v1.5` on CPU. Changing this requires `pnpm reembed` |
+| `EMBEDDING_PROVIDER` | `openrouter` | Hosted `nvidia/nemotron-3-embed-1b:free`, 2048-d. Frees ~350 MB of RAM but makes **search spend free-tier budget**; search falls back to keyword-only when it runs out. `local` (`bge-small-en-v1.5`, 384-d, ~350 MB) still works — set `EMBEDDING_DIMENSIONS=384` and raise `mem_limit` to 1g. Changing this requires `pnpm reembed` |
 | `WORKER_ENABLED` | `true` | Set `false` to run the worker as a separate container |
 | `GITHUB_PAT` | — | Without it you get 60 req/hr and repo enrichment will stall |
 

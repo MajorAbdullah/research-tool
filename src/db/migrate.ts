@@ -22,6 +22,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import type Database from 'better-sqlite3'
 import { getSqlite } from './client'
+import { getConfig } from '@/lib/config'
 import { logger } from '@/lib/logger'
 
 // Relative to the process cwd, matching drizzle.config.ts's own `out: './drizzle'` convention —
@@ -46,6 +47,52 @@ export function runMigrations(sqlite: Database.Database = getSqlite()): void {
   const sql = fs.readFileSync(MIGRATION_FILE, 'utf8')
   applyMigrationSql(sqlite, sql)
   logger.info({ file: MIGRATION_FILE }, 'db: migrations applied')
+  reconcileChunkVecDimensions(sqlite, getConfig().embeddingDimensions)
+}
+
+/** Reads the width out of chunk_vec's stored CREATE statement, e.g. `... float[384])` -> 384. */
+export function readChunkVecDimensions(sqlite: Database.Database): number | null {
+  const row = sqlite
+    .prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'chunk_vec'")
+    .get() as { sql: string | null } | undefined
+  const match = row?.sql?.match(/float\s*\[\s*(\d+)\s*\]/i)
+  return match?.[1] ? Number(match[1]) : null
+}
+
+/**
+ * Makes `chunk_vec`'s column width match the configured embedding dimension.
+ *
+ * `0000_init.sql` hardcodes `float[384]`, which was correct while the local model was the only
+ * supported one (ADR 0003: "a fixed, literal 384-dim column"). The dimension is now a deployment
+ * choice — OpenRouter's free embedding models return 2048 — and a vec0 virtual table's width is
+ * fixed at CREATE and cannot be ALTERed, so the table has to be recreated to change it.
+ *
+ * Dropping is safe only while the table is empty: `chunk_vec` is derived data, rebuildable from
+ * `chunks` by `pnpm reembed`, but rebuilding costs a full re-embed pass and (on a hosted provider)
+ * real request budget. So an empty mismatched table is silently corrected, and a POPULATED
+ * mismatched one refuses to boot — the alternative is deleting someone's whole index as a side
+ * effect of an env edit.
+ */
+export function reconcileChunkVecDimensions(sqlite: Database.Database, dimensions: number): void {
+  const actual = readChunkVecDimensions(sqlite)
+  if (actual === null || actual === dimensions) return
+
+  const populated =
+    (sqlite.prepare('SELECT COUNT(*) AS n FROM chunk_vec').get() as { n: number }).n > 0
+
+  if (populated) {
+    throw new Error(
+      `chunk_vec is ${actual}-d but EMBEDDING_DIMENSIONS is ${dimensions}, and it already holds ` +
+        `vectors. Vectors from different models aren't comparable, so this will not be changed ` +
+        `automatically — that would silently delete the whole index. Run 'pnpm reembed' to ` +
+        `rebuild it at ${dimensions}-d with the configured model, or put EMBEDDING_DIMENSIONS ` +
+        `back to ${actual}.`,
+    )
+  }
+
+  sqlite.exec('DROP TABLE IF EXISTS chunk_vec')
+  sqlite.exec(`CREATE VIRTUAL TABLE chunk_vec USING vec0(embedding float[${dimensions}])`)
+  logger.info({ from: actual, to: dimensions }, 'db: rebuilt empty chunk_vec at configured width')
 }
 
 // CLI entry point — `pnpm db:migrate` runs `tsx src/db/migrate.ts` directly.

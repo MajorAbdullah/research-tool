@@ -200,6 +200,16 @@ export interface EmbeddingProvider {
   readonly model: string
   readonly dimensions: number
   /**
+   * Optional one-time warm-up, called at boot rather than on the first embed so the cost lands
+   * somewhere visible instead of inside a user's first capture.
+   *
+   * Optional because only a local provider has anything to warm: it loads a ~350 MB ONNX model
+   * off disk (~0.25 s warm, minutes on a cold cache). A hosted provider has nothing to do here —
+   * avoiding exactly that resident cost is the reason to use one — so it simply doesn't implement
+   * this, and callers use `provider.warmUp?.()`.
+   */
+  warmUp?(): Promise<void>
+  /**
    * Embed DOCUMENTS (chunks) for storage.
    *
    * Array-batched, deliberately — one call for N texts, not N calls, both for local throughput

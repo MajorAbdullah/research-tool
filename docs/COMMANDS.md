@@ -197,13 +197,14 @@ it a different way. Both are pinned below `latest` deliberately.
 ## Evals — the only way to catch a silent search regression
 
 ```bash
-make eval              # retrieval: context precision + recall.  FREE (local embeddings)
+make eval              # retrieval: context precision + recall.  SPENDS requests (hosted embeddings)
 make eval-rag          # generation: faithfulness + relevancy.   SPENDS free-tier requests
 ```
 
 **Run `make eval` after any change to chunking, embeddings, retrieval, or prompts.** Retrieval
-getting worse does not throw an exception — nothing else will tell you. It costs nothing because
-embeddings run locally, so there's no reason to be sparing with it.
+getting worse does not throw an exception — nothing else will tell you. It used to be free; since
+embeddings moved to OpenRouter (ADR 0003 amendment) each run spends a request per batch, so it is
+no longer unlimited — still cheap enough to run on every retrieval change, just not in a loop.
 
 The two are scored separately on purpose: a good answer built on bad context is a fragile system,
 and a single blended number hides exactly that.
@@ -220,7 +221,9 @@ make db-generate       # generate a new drizzle migration after editing schema.t
 
 **On `reembed`:** vectors from different embedding models are not comparable. The app refuses to
 mix them and fails loudly at startup rather than silently corrupting search. If you change
-`EMBEDDING_PROVIDER` or the model, run this.
+`EMBEDDING_PROVIDER`, `EMBEDDING_MODEL` or `EMBEDDING_DIMENSIONS`, run this — it rebuilds
+`chunk_vec` at the configured width (a vec0 table's width is fixed at CREATE, so switching between
+the 2048-d hosted model and the 384-d local one *requires* it).
 
 **On backups:** a backup you have never restored is not a backup. The restore procedure is in
 [`deploy/RESTORE.md`](../deploy/RESTORE.md) — walk it once.
@@ -272,8 +275,14 @@ you've saved — the others leave `./data` alone because it's a bind mount, not 
 stray `next start`. `make stop` handles the container. For a stray process:
 `lsof -ti:3060 | xargs kill`.
 
-**First captured link seems to hang.** The embedding model is downloading (~128 MB, ~480 s). Run
-`make model-warm` once and it never happens again.
+**First captured link seems to hang.** Only on `EMBEDDING_PROVIDER=local` — the embedding model is
+downloading (~128 MB, ~480 s); run `make model-warm` once and it never happens again. The default
+hosted provider downloads nothing.
+
+**Search results got noticeably worse and `make health` shows no quota left.** Expected: with
+hosted embeddings, search degrades to keyword-only (FTS) once the daily budget is spent, rather
+than erroring. It recovers at the UTC reset. The server logs `degrading to keyword-only (FTS)`
+each time it happens.
 
 **Repo enrichment stops working.** You've hit GitHub's 60 req/hr unauthenticated limit. Set
 `GITHUB_PAT` in `.env` for 5,000/hr.

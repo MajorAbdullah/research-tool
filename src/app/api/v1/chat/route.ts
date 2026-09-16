@@ -30,7 +30,7 @@ import { auth } from '@/lib/auth'
 import { requireUserId, ScopingError } from '@/repositories/scoping'
 import { getSqlite } from '@/db/client'
 import { getConfig } from '@/lib/config'
-import { getLocalEmbeddingProvider } from '@/lib/embeddings'
+import { createEmbeddingProviderFromConfig } from '@/lib/embeddings'
 import { logger } from '@/lib/logger'
 import { ItemKind } from '@/types/contracts'
 import type { CreateProviderDeps } from '@/lib/ai'
@@ -253,7 +253,13 @@ export async function POST(request: NextRequest): Promise<Response> {
   }
 
   const sqlite = getSqlite()
-  const embeddingProvider = getLocalEmbeddingProvider()
+  // Follows EMBEDDING_PROVIDER like every other retrieval path. Pinning this to the local
+  // provider produced 384-d query vectors against a 2048-d index once the deployment moved to a
+  // hosted model. `interactive` lane: the user is waiting on this answer.
+  const embeddingProvider = createEmbeddingProviderFromConfig({
+    budget: aiDeps.budget,
+    lane: 'interactive',
+  })
   const message = parsed.message
   const chatFilters: ChatFilters = { kind: parsed.filters?.kind, topic: parsed.filters?.topic }
   const encoder = new TextEncoder()

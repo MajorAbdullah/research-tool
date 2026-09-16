@@ -109,6 +109,14 @@ const EnvSchema = z
 
     // --- Embeddings ---
     EMBEDDING_PROVIDER: z.enum(['local', 'openrouter']).default('local'),
+    // Both optional here and resolved per-provider in `resolveEmbeddingSettings` — `local` has
+    // known constants, `openrouter` has neither and must state both explicitly. The refine below
+    // enforces that.
+    EMBEDDING_MODEL: z
+      .string()
+      .optional()
+      .transform((v) => (v === undefined || v.trim() === '' ? undefined : v.trim())),
+    EMBEDDING_DIMENSIONS: z.coerce.number().int().positive().optional(),
 
     // --- Worker ---
     WORKER_ENABLED: booleanFromEnv(true),
@@ -117,8 +125,60 @@ const EnvSchema = z
     message: 'LLM_INTERACTIVE_RESERVE must not exceed LLM_DAILY_CAP',
     path: ['LLM_INTERACTIVE_RESERVE'],
   })
+  // A hosted embedding model's dimension is not discoverable from its name and is not guaranteed
+  // to be documented (ADR 0003). It also has to match the `chunk_vec` column width exactly, or
+  // every insert fails. Refusing to boot without it is much better than guessing: a wrong guess
+  // would not error, it would write vectors that silently never match anything.
+  .refine(
+    (env) => env.EMBEDDING_PROVIDER !== 'openrouter' || env.EMBEDDING_DIMENSIONS !== undefined,
+    {
+      message:
+        'EMBEDDING_DIMENSIONS is required when EMBEDDING_PROVIDER=openrouter (there is no safe ' +
+        'default for a hosted model). nvidia/nemotron-3-embed-1b:free is 2048 — verify against the ' +
+        'model you configure, and remember it must equal the chunk_vec column width.',
+      path: ['EMBEDDING_DIMENSIONS'],
+    },
+  )
 
 type ParsedEnv = z.infer<typeof EnvSchema>
+
+/** bge-small-en-v1.5's fixed, known output size — the reason ADR 0003 could hardcode it. */
+export const LOCAL_EMBEDDING_MODEL = 'bge-small-en-v1.5'
+export const LOCAL_EMBEDDING_DIMENSIONS = 384
+
+/** Measured against the live endpoint, not read off a spec sheet: both free NVIDIA embedding
+ *  models on OpenRouter return 2048. Used only as the default when EMBEDDING_MODEL is unset —
+ *  EMBEDDING_DIMENSIONS is still required, because it must match the chunk_vec column width and
+ *  that is not something to infer from a model name. */
+export const DEFAULT_OPENROUTER_EMBEDDING_MODEL = 'nvidia/nemotron-3-embed-1b:free'
+
+/**
+ * The single place the embedding model and its dimension are decided, so `chunk_vec`'s column
+ * width, the provider, the search path and `pnpm reembed` cannot drift apart. Every one of those
+ * has to agree exactly — a mismatch doesn't throw, it writes vectors that never match anything.
+ */
+export function resolveEmbeddingSettings(
+  env: Pick<ParsedEnv, 'EMBEDDING_PROVIDER' | 'EMBEDDING_MODEL' | 'EMBEDDING_DIMENSIONS'>,
+): {
+  embeddingModel: string
+  embeddingDimensions: number
+} {
+  if (env.EMBEDDING_PROVIDER === 'openrouter') {
+    if (env.EMBEDDING_DIMENSIONS === undefined) {
+      // Unreachable via loadConfig (the schema refine catches it first); kept so direct callers
+      // of this function can't bypass the requirement.
+      throw new ConfigError('EMBEDDING_DIMENSIONS is required when EMBEDDING_PROVIDER=openrouter.')
+    }
+    return {
+      embeddingModel: env.EMBEDDING_MODEL ?? DEFAULT_OPENROUTER_EMBEDDING_MODEL,
+      embeddingDimensions: env.EMBEDDING_DIMENSIONS,
+    }
+  }
+  return {
+    embeddingModel: env.EMBEDDING_MODEL ?? LOCAL_EMBEDDING_MODEL,
+    embeddingDimensions: env.EMBEDDING_DIMENSIONS ?? LOCAL_EMBEDDING_DIMENSIONS,
+  }
+}
 
 /**
  * The typed, camelCased config every module imports. Field names intentionally diverge from
@@ -146,6 +206,9 @@ export interface AppConfig {
   llmInteractiveReserve: number
 
   embeddingProvider: 'local' | 'openrouter'
+  /** Resolved per-provider — see `resolveEmbeddingSettings`. Never guessed. */
+  embeddingModel: string
+  embeddingDimensions: number
 
   workerEnabled: boolean
 }
@@ -172,6 +235,7 @@ function toAppConfig(env: ParsedEnv): AppConfig {
     llmInteractiveReserve: env.LLM_INTERACTIVE_RESERVE,
 
     embeddingProvider: env.EMBEDDING_PROVIDER,
+    ...resolveEmbeddingSettings(env),
 
     workerEnabled: env.WORKER_ENABLED,
   }

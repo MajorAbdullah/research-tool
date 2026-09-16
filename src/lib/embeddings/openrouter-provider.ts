@@ -114,7 +114,25 @@ export class OpenRouterEmbeddingProvider implements EmbeddingProvider {
       const body = (await res.json()) as OpenRouterEmbeddingsResponse
       // Defensive re-sort by index: batched embedding APIs are not universally guaranteed to
       // return rows in request order.
-      return [...body.data].sort((a, b) => a.index - b.index).map((d) => d.embedding)
+      const vectors = [...body.data].sort((a, b) => a.index - b.index).map((d) => d.embedding)
+
+      // Verify the width the model ACTUALLY returned against the configured one. This is the
+      // failure ADR 0003 warned about: a hosted model can be changed or retired under a stable
+      // `:free` alias, and a different dimension would otherwise be written straight into a
+      // `chunk_vec` column sized for the old one. sqlite-vec would reject the insert, but the
+      // useful error is this one — naming both numbers and the remedy — not a binding failure
+      // several frames away. Checking one vector is enough; a batch is uniform.
+      const width = vectors[0]?.length
+      if (width !== undefined && width !== this.dimensions) {
+        throw new Error(
+          `OpenRouter embedding model '${this.model}' returned ${width}-d vectors but this ` +
+            `deployment is configured for ${this.dimensions}-d (EMBEDDING_DIMENSIONS, and the ` +
+            `chunk_vec column width). The hosted model behind this alias has almost certainly ` +
+            `changed. Existing vectors are NOT comparable to these — do not write them. Fix the ` +
+            `dimension, migrate chunk_vec to match, and run 'pnpm reembed'.`,
+        )
+      }
+      return vectors
     } finally {
       clearTimeout(timer)
     }

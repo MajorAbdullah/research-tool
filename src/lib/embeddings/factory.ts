@@ -8,6 +8,9 @@
  */
 
 import type { EmbeddingProvider } from '@/types/contracts'
+import { getConfig, type AppConfig } from '@/lib/config'
+import type { BudgetLane, BudgetManager } from '@/lib/ai/budget'
+import { BudgetedEmbeddingProvider } from './budgeted-provider'
 import { getLocalEmbeddingProvider, type LocalEmbeddingProviderOptions } from './local-provider'
 import {
   OpenRouterEmbeddingProvider,
@@ -50,4 +53,52 @@ export function createEmbeddingProvider(selection: EmbeddingProviderSelection): 
     )
   }
   return new OpenRouterEmbeddingProvider(selection.openRouter)
+}
+
+/**
+ * The one supported way to build the app's embedding provider: everything comes from validated
+ * config, so `chunk_vec`'s column width, the search path and `pnpm reembed` all read the same
+ * numbers. Use this rather than `createEmbeddingProvider` anywhere that runs in the real app.
+ *
+ * `createEmbeddingProvider` above still takes explicit options because tests and one-off scripts
+ * legitimately need to construct a provider without a full environment.
+ *
+ * Note what this does NOT do: fall back to the other provider when one is unavailable. Vectors
+ * from different models aren't comparable, so a fallback would silently corrupt the index — the
+ * rule from ADR 0003 that survives every other change here.
+ */
+export interface EmbeddingProviderFromConfigOptions {
+  config?: AppConfig
+  /**
+   * Supply both to meter a HOSTED provider against the shared free-tier budget. Omitted for the
+   * local provider, which spends no requests, and omitted in tests/scripts that have no budget.
+   * Without it a hosted provider still works — it just isn't counted, which is only correct where
+   * nothing else is counting either.
+   */
+  budget?: BudgetManager
+  /** `background` for ingest/re-embed; `interactive` for a query a user is waiting on. */
+  lane?: BudgetLane
+}
+
+export function createEmbeddingProviderFromConfig(
+  options: EmbeddingProviderFromConfigOptions = {},
+): EmbeddingProvider {
+  const config = options.config ?? getConfig()
+
+  if (config.embeddingProvider !== 'openrouter') {
+    // Local: no network, no quota, nothing to meter.
+    return createEmbeddingProvider({ provider: 'local' })
+  }
+
+  const provider = createEmbeddingProvider({
+    provider: 'openrouter',
+    openRouter: {
+      apiKey: config.openRouterApiKey,
+      model: config.embeddingModel,
+      dimensions: config.embeddingDimensions,
+    },
+  })
+
+  if (!options.budget) return provider
+  return new BudgetedEmbeddingProvider(provider, options.budget, options.lane ?? 'background')
 }

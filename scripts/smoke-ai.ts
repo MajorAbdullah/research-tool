@@ -35,7 +35,7 @@ import {
   RATE_LIMIT_PER_MINUTE,
 } from '@/lib/ai'
 import { enrichItem } from '@/lib/ai/enrichment'
-import { getLocalEmbeddingProvider } from '@/lib/embeddings'
+import { createEmbeddingProviderFromConfig } from '@/lib/embeddings'
 
 const MALICIOUS_README = `
 # vLLM
@@ -79,8 +79,11 @@ async function main() {
   }
   const provider = createEnrichmentProvider(deps)
 
-  console.log('\n-- loading local embedding model --')
-  const embeddingProvider = await getLocalEmbeddingProvider()
+  // Whichever provider is actually configured — a smoke test pinned to the local model would
+  // happily pass while the deployed hosted one was broken, which is the opposite of the point.
+  console.log('\n-- embedding provider --')
+  const embeddingProvider = createEmbeddingProviderFromConfig()
+  await embeddingProvider.warmUp?.()
   console.log(`   ${embeddingProvider.model} @ ${embeddingProvider.dimensions} dims`)
 
   console.log('\n-- enriching a README that contains an injection attempt --')

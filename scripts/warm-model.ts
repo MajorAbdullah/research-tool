@@ -10,6 +10,12 @@
  *
  * Safe to re-run: if the cache is already populated this is a no-op plus one
  * embedding call, and prints the warm timing instead.
+ *
+ * LOCAL ONLY, deliberately. This warms `bge-small-en-v1.5` regardless of
+ * EMBEDDING_PROVIDER, because warming is only a concept for the on-disk model —
+ * there is nothing to pre-download for a hosted one. On the default
+ * EMBEDDING_PROVIDER=openrouter deployment you do not need to run this at all;
+ * it is here for when you switch back to `local`.
  */
 import { getLocalEmbeddingProvider } from '@/lib/embeddings'
 
