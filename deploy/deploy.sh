@@ -123,7 +123,7 @@ echo "==> Pulling ${IMAGE_REF}"
 docker pull "${IMAGE_REF}"
 
 if ! roll_to "${IMAGE_REF}"; then
-  docker compose -f compose.yml -f compose.prod.yml ps
+  SIEVE_IMAGE="${IMAGE_REF}" docker compose -f compose.yml -f compose.prod.yml ps
   echo "!! Last 50 log lines from the failed container:" >&2
   docker logs --tail 50 sieve 2>&1 | sed 's/^/!!   /' >&2
 

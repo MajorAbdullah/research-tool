@@ -148,7 +148,8 @@ RUN rm -rf \
       node_modules/@anush008 \
       node_modules/@huggingface \
       node_modules/tar \
-      node_modules/progress
+      node_modules/progress \
+      node_modules/@napi-rs
 
 COPY --from=prod-deps /app/node_modules/better-sqlite3       ./node_modules/better-sqlite3
 COPY --from=prod-deps /app/node_modules/argon2                ./node_modules/argon2
@@ -160,6 +161,9 @@ COPY --from=prod-deps /app/node_modules/@anush008              ./node_modules/@a
 COPY --from=prod-deps /app/node_modules/@huggingface           ./node_modules/@huggingface
 COPY --from=prod-deps /app/node_modules/tar                    ./node_modules/tar
 COPY --from=prod-deps /app/node_modules/progress               ./node_modules/progress
+# pdfjs-dist (via pdf-parse) require()s this at load time to polyfill DOMMatrix;
+# without it the instrumentation hook crashes and the server never serves a request.
+COPY --from=prod-deps /app/node_modules/@napi-rs               ./node_modules/@napi-rs
 
 # onnxruntime-node bundles win32/darwin/linux binaries in one npm package.
 # We deploy to linux/amd64 only — drop the other platforms' binaries to

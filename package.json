@@ -50,6 +50,7 @@
     "jsdom": "30.0.1",
     "undici": "8.10.2",
     "pdf-parse": "2.4.5",
+    "@napi-rs/canvas": "0.1.80",
     "lucide-react": "1.45.0",
     "clsx": "2.1.1",
     "tailwind-merge": "3.6.0"

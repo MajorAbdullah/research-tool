@@ -43,6 +43,12 @@ export async function register(): Promise<void> {
   runMigrations(getSqlite())
   logger.info('boot: migrations applied')
 
+  // The production image has no tsx, so `pnpm seed:user` can't run there — boot is the only
+  // place the single user can be created. Idempotent; a changed SEED_USER_PASSWORD rotates it.
+  const { seedUser } = await import('@/db/seed-user')
+  const { action } = await seedUser()
+  logger.info({ action }, 'boot: seed user ensured')
+
   if (!config.workerEnabled) {
     logger.info('boot: WORKER_ENABLED=false — worker loop not started (see ADR 0007)')
     return
