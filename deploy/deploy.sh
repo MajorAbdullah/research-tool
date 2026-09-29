@@ -160,7 +160,7 @@ if ! roll_to "${IMAGE_REF}"; then
 fi
 
 echo "==> docker compose ps"
-docker compose -f compose.yml -f compose.prod.yml ps
+SIEVE_IMAGE="${IMAGE_REF}" docker compose -f compose.yml -f compose.prod.yml ps
 
 echo "==> Health endpoint response:"
 curl -fsS http://127.0.0.1:3060/api/v1/health && echo
